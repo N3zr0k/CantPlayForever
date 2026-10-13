@@ -2,10 +2,12 @@
 """Repo-Prüfung (läuft lokal und in der CI): Struktur, Versionen, Changelog, Locale-Schlüssel.
 
 Aufruf:  python3 tools/check.py [--tag v0.2.1-alpha.1]
+         python3 tools/check.py --suffix-only v0.2.1-alpha.2   (gibt ein älteres Tag mit gleichem X.Y.Z und gleicher Phase aus)
 Ohne --tag wird die Version aus den TOCs genommen. Rückgabewert 0 = in Ordnung.
 """
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -57,8 +59,23 @@ def check_versions(tag):
             error(f'TOC-Version {version} entspricht nicht dem Tag {tag}')
         z_version = '.'.join(match.groups()[:3])
         changelog = (ROOT / 'CHANGELOG.md').read_text(encoding='utf-8')
-        if not re.search(rf'^##\s+v?{re.escape(z_version)}\b', changelog, re.M):
+        found = re.search(rf'^##\s+\[?v?{re.escape(z_version)}\]?(?!\d)', changelog, re.M)
+        unreleased = match.group(4) == 'alpha' and re.search(r'^##\s+\[Unreleased\]', changelog, re.M | re.I)
+        if not (found or unreleased):
             error(f'CHANGELOG.md hat keinen Abschnitt für {z_version}')
+
+
+def older_tag(tag):
+    """Vorhandenes Tag mit gleichem X.Y.Z und gleicher Phase, aber anderem N (sonst leer)."""
+    match = TAG_RE.match(tag)
+    if not match:
+        return ''
+    out = subprocess.run(['git', 'tag', '-l', 'v*'], cwd=ROOT, capture_output=True, text=True).stdout.split()
+    for other in sorted(out):
+        other_match = TAG_RE.match(other)
+        if other_match and other != tag and other_match.groups()[:4] == match.groups()[:4]:
+            return other
+    return ''
 
 
 def check_curse_id():
@@ -115,7 +132,11 @@ def check_locales():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--tag')
+    parser.add_argument('--suffix-only', metavar='TAG')
     args = parser.parse_args()
+    if args.suffix_only:
+        print(older_tag(args.suffix_only))
+        return 0
     check_structure()
     check_versions(args.tag)
     check_curse_id()
