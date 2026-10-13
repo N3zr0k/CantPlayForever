@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0
       - run: python3 tools/check.py --tag ${{ github.ref_name }}
       # alpha: nur GitHub-Prerelease (-p 0 deaktiviert CurseForge); beta/latest: zusätzlich CurseForge
-      # Projekt-ID hier und in der TOC (X-Curse-Project-ID) eintragen: CF_ID
+      # Projekt-ID hier und in der TOC (X-Curse-Project-ID) eingetragen: 1740064
       - uses: BigWigsMods/packager@v2
         with:
-          args: ${{ contains(github.ref_name, '-alpha.') && '-p 0 -w 0 -a 0' || '-p CF_ID -w 0 -a 0' }}
+          args: ${{ contains(github.ref_name, '-alpha.') && '-p 0 -w 0 -a 0' || '-p 1740064 -w 0 -a 0' }}

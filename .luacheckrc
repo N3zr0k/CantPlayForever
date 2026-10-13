@@ -9,7 +9,7 @@ ignore = {
 read_globals = {
     -- Lua / WoW Lua extensions
     "date", "time", "format", "strsplit", "strjoin", "wipe", "tinsert", "tremove", "unpack",
-    "hooksecurefunc", "CopyTable", "LibStub", "ipairs", "pairs",
+    "hooksecurefunc", "CreateColor", "CopyTable", "LibStub", "ipairs", "pairs",
     -- WoW API
     "CreateFrame", "UIParent", "GameTooltip", "C_Timer", "C_Texture", "C_AddOns", "C_DateAndTime",
     "GetTime", "GetServerTime", "GetGameTime", "GetCVar", "GetCursorPosition", "IsShiftKeyDown",

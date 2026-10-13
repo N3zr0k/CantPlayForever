@@ -114,7 +114,7 @@ end
 function Clock.ResizeClockFont(text, fontObject, size, maxWidth)
     local obj = _G[fontObject]
     if obj and type(obj.GetFont) == 'function' then
-        local path, _, flags = obj:GetFont()
+        local path = obj:GetFont()
         if path then
             text:SetFont(path, size, 'OUTLINE')
             local actualWidth = text:GetStringWidth() or 0

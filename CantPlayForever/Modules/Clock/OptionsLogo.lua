@@ -232,10 +232,10 @@ function Clock:StyleOptionsFrame()
                 open.cpfStatusColor = nil
             end
             local saved = open.cpfStatusSaved
-            local statusbg = open.statustext:GetParent()
-            if saved and statusbg and statusbg.SetBackdropColor then
-                statusbg:SetBackdropColor(unpack(saved[1]))
-                statusbg:SetBackdropBorderColor(unpack(saved[2]))
+            local plate = open.statustext:GetParent()
+            if saved and plate and plate.SetBackdropColor then
+                plate:SetBackdropColor(unpack(saved[1]))
+                plate:SetBackdropBorderColor(unpack(saved[2]))
             end
             open.cpfStatusSaved = nil
         end)

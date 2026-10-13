@@ -3,7 +3,7 @@
 -- Leuchtzeile wie alle Glows ("FARBCODE, static|pulse|blink, [Sekunden,] Prozent").
 local ADDON_NAME, ns = ...
 if not ns.Clock then return end
-local Clock, L = ns.Clock, ns.L
+local Clock = ns.Clock
 
 local DEFAULT_SPEC = 'FF2619, pulse, 1, 30'
 local EDGE_WIDTH, EDGE_HEIGHT = 0.12, 0.20 -- Anteil der Bildschirmbreite/-höhe
