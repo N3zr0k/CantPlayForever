@@ -207,14 +207,14 @@ function Clock:InitializeOptions()
             -- Inhalt unter das größere Logo schieben. AceConfigDialog ruft SetTitle bei jedem
             -- Anzeigen erneut auf und setzt die Position zurück, daher SetTitle erweitern.
             local baseSetTitle = widget.SetTitle
-            local function PlaceContent(self)
-                self.content:ClearAllPoints()
-                self.content:SetPoint('TOPLEFT', frame, 'TOPLEFT', 10, -78)
-                self.content:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -10, 10)
+            local function PlaceContent(group)
+                group.content:ClearAllPoints()
+                group.content:SetPoint('TOPLEFT', frame, 'TOPLEFT', 10, -78)
+                group.content:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -10, 10)
             end
-            widget.SetTitle = function(self, title)
-                baseSetTitle(self, title)
-                PlaceContent(self)
+            widget.SetTitle = function(group, title)
+                baseSetTitle(group, title)
+                PlaceContent(group)
             end
             PlaceContent(widget)
         end

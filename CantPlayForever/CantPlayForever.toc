@@ -4,7 +4,7 @@
 ## Notes-deDE: Blizzard-Uhr mit mehreren Alarmen und Timern (WoW Forever)
 ## Notes-frFR: Horloge avec alarmes et minuteurs multiples (WoW Forever)
 ## Author: N3zr0k
-## Version: 0.2.5-alpha.1
+## Version: 0.2.5-alpha.2
 ## IconTexture: Interface\AddOns\CantPlayForever\Media\Logos\allgemein_logo.tga
 ## SavedVariables: CantPlayForeverSettings, BetterClockSettings
 ## X-Curse-Project-ID: 1740064
