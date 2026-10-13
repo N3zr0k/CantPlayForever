@@ -1,14 +1,55 @@
 name: CI
-on: [push, pull_request]
+
+# Auf jedem Push und Pull Request: luacheck, tools/check.py und Tests.
+# Auf main legt die CI danach das Tag vX.Y.Z-PHASE.N aus der TOC-Version an (falls es fehlt)
+# und startet release.yml auf diesem Tag. Das ist nötig, weil ein mit dem GITHUB_TOKEN
+# gepushtes Tag keinen Push-Workflow auslöst.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: sudo apt-get update && sudo apt-get install -y luarocks && sudo luarocks install luacheck
       - run: luacheck . --no-color
-      - run: python3 tools/check.py ${{ startsWith(github.ref, 'refs/tags/v') && format('--tag {0}', github.ref_name) || '' }}
+      - run: python3 tools/check.py
       - run: python3 -m unittest discover tests
+
+  tag:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Tag aus der TOC-Version anlegen und Release starten
+        run: |
+          version="$(sed -n 's/^## Version:[[:space:]]*//p' CantPlayForever/CantPlayForever.toc | tr -d '\r')"
+          tag="v$version"
+          python3 tools/check.py --tag "$tag"
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            echo "Tag $tag existiert schon, nichts zu tun."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$tag"
+          git push origin "$tag"
+          gh workflow run release.yml --ref "$tag"
