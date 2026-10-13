@@ -17,4 +17,4 @@ read_globals = {
     "GetLocale", "GetAddOnMetadata", "SlashCmdList", "Minimap", "MinimapCluster", "BackdropTemplateMixin",
     "TimeManagerClockButton", "TimeManager_Toggle", "Stopwatch_Toggle", "InterfaceOptions_AddCategory",
 }
-globals = { "BetterClockSettings", "SLASH_CPF1", "SLASH_CPF2" }
+globals = { "BetterClockSettings", "CantPlayForeverSettings", "SLASH_CPF1", "SLASH_CPF2" }

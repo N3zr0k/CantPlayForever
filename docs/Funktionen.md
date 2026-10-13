@@ -6,7 +6,7 @@
 * Original-Uhr ausblenden, Stoppuhr (Strg + Rechtsklick), Menü Original-Uhr (Alt + Rechtsklick).
 * Effekte: Ton, Chat, Leuchten am Bildschirmrand (Geschwindigkeit einstellbar).
 
-## Datenbank (`BetterClockSettings`)
+## Datenbank (`CantPlayForeverSettings`)
 
 | Bereich | Lesen | Schreiben |
 |---|---|---|
@@ -16,4 +16,4 @@
 | Effekte | `playSound`, `screenGlow`, `screenGlowSpec`, `screenGlowSkipInstances`, `glowSpeed` | Optionen |
 | Allgemein | `modules`, `global.debug`, `global.scope` | Optionen |
 
-Pro Datei siehe [Files.md](Files.md). Migration: Alarme (Zeitplan-Marker `sched == 2`) beim Laden.
+Pro Datei siehe [Files.md](Files.md). Migration: beim ersten Start werden die alten `BetterClockSettings` übernommen. Alarme (Zeitplan-Marker `sched == 2`) beim Laden.

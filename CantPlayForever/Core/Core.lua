@@ -324,11 +324,24 @@ function Clock:OnInitialize()
     -- Erkennen, ob das Profil schon in der SavedVariables-Datei existierte.
     -- Gelöschte Einträge älterer Versionen dürfen nicht neu erzeugt werden.
     local existing = {}
-    local saved = _G.BetterClockSettings
+    -- Migration: Einstellungen der alten SavedVariables (BetterClockSettings) einmalig
+    -- in CantPlayForeverSettings übernehmen. Die alte Tabelle bleibt unverändert als Sicherung.
+    local old = _G.BetterClockSettings
+    local current = _G.CantPlayForeverSettings
+    if type(old) == 'table' and not (type(current) == 'table' and current.profiles) then
+        local function Copy(value)
+            if type(value) ~= 'table' then return value end
+            local result = {}
+            for key, entry in pairs(value) do result[key] = Copy(entry) end
+            return result
+        end
+        _G.CantPlayForeverSettings = Copy(old)
+    end
+    local saved = _G.CantPlayForeverSettings
     if type(saved) == 'table' and type(saved.profiles) == 'table' then
         for profileName in pairs(saved.profiles) do existing[profileName] = true end
     end
-    self.db = AceDB:New('BetterClockSettings', DEFAULTS, true)
+    self.db = AceDB:New('CantPlayForeverSettings', DEFAULTS, true)
     local name = self:ProfileName()
     self.db:SetProfile(name)
     self:MigrateProfile(not existing[name])
@@ -363,7 +376,7 @@ function Clock:OnEnable()
         end)
     end
     local getMeta = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
-    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '0.2.1'
+    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '0.2.5'
     self:Print(string.format(L.VERSION_LOADED, tostring(version)))
 end
 

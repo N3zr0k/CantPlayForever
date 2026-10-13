@@ -1,6 +1,6 @@
 # Dateien
 
-Pflege: bei jeder Dateiänderung aktualisieren. Lesen/Schreiben = Schlüssel in `BetterClockSettings` (profile/global).
+Pflege: bei jeder Dateiänderung aktualisieren. Lesen/Schreiben = Schlüssel in `CantPlayForeverSettings` (profile/global).
 
 Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub) sind eingebettet.
 
@@ -8,7 +8,7 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 
 | Datei | Beschreibung | DB lesen | DB schreiben |
 |---|---|---|---|
-| `CantPlayForever.toc` | Addon-Manifest (Version, SavedVariables BetterClockSettings) | – | – |
+| `CantPlayForever.toc` | Addon-Manifest (Version, SavedVariables CantPlayForeverSettings, alt: BetterClockSettings) | – | – |
 | `CantPlayForever.xml` | Ladereihenfolge: Libs, Core, Modules | – | – |
 | `Core/Alert.lua` | Alarm-Auslösung: Ton, Chat, Bildschirmleuchten | alarmRepeats, alarmSound, glowSpeed, playSound | – |
 | `Core/Core.lua` | Addon-Objekt, AceDB, Defaults, Migration der Alarme, Slash-Befehle | debug, modules | scope |

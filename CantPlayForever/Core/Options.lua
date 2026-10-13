@@ -189,5 +189,34 @@ function Clock:InitializeOptions()
     end
     self.aceConfig:RegisterOptionsTable('CantPlayForever', BuildOptions)
     -- AceConfigDialog works both standalone and, where supported, in Blizzard AddOn settings.
-    pcall(function() self.aceDialog:AddToBlizOptions('CantPlayForever', "Can't play Forever") end)
+    pcall(function()
+        local frame = self.aceDialog:AddToBlizOptions('CantPlayForever', "Can't play Forever")
+        -- Allgemein-Logo links neben der Überschrift im Blizzard-Optionsfenster.
+        local widget = frame and frame.obj
+        local label = widget and widget.label
+        if label then
+            local icon = frame:CreateTexture(nil, 'OVERLAY')
+            icon:SetSize(64, 64)
+            icon:SetPoint('TOPLEFT', frame, 'TOPLEFT', 10, -6)
+            icon:SetTexture('Interface\\AddOns\\CantPlayForever\\Media\\Logos\\allgemein_logo')
+            label:SetPoint('TOPLEFT', frame, 'TOPLEFT', 84, -20)
+            local tagline = frame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlight')
+            tagline:SetPoint('TOPLEFT', frame, 'TOPLEFT', 84, -44)
+            tagline:SetTextColor(0.6, 0.6, 0.6)
+            tagline:SetText(L.ADDON_TAGLINE)
+            -- Inhalt unter das größere Logo schieben. AceConfigDialog ruft SetTitle bei jedem
+            -- Anzeigen erneut auf und setzt die Position zurück, daher SetTitle erweitern.
+            local baseSetTitle = widget.SetTitle
+            local function PlaceContent(self)
+                self.content:ClearAllPoints()
+                self.content:SetPoint('TOPLEFT', frame, 'TOPLEFT', 10, -78)
+                self.content:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -10, 10)
+            end
+            widget.SetTitle = function(self, title)
+                baseSetTitle(self, title)
+                PlaceContent(self)
+            end
+            PlaceContent(widget)
+        end
+    end)
 end

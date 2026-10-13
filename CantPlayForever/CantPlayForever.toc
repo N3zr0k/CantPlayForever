@@ -3,10 +3,10 @@
 ## Notes: Clock with multiple alarms and timers (WoW Forever)
 ## Notes-deDE: Blizzard-Uhr mit mehreren Alarmen und Timern (WoW Forever)
 ## Notes-frFR: Horloge avec alarmes et minuteurs multiples (WoW Forever)
-## Author: CantPlayForever
-## Version: 0.2.1-alpha.1
-## IconTexture: Interface\Icons\INV_Misc_PocketWatch_01
-## SavedVariables: BetterClockSettings
+## Author: N3zr0k
+## Version: 0.2.5-alpha.1
+## IconTexture: Interface\AddOns\CantPlayForever\Media\Logos\allgemein_logo.tga
+## SavedVariables: CantPlayForeverSettings, BetterClockSettings
 ## X-Curse-Project-ID: 1740064
 
 CantPlayForever.xml

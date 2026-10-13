@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.5
+- Fixed the options window content overlapping the new logo and description.
+
+## 0.2.4
+- Options window logo is larger and sits next to the title and description.
+
+## 0.2.3
+- Options window shows the addon logo and a short description under the title.
+
+## 0.2.2
+- Settings are now stored in `CantPlayForeverSettings`; existing settings are migrated automatically.
+
 ## 0.2.1
 - Hides the original minimap clock while this clock is active (option, on by default).
 - Ctrl + right-click opens the original stopwatch, Alt + right-click the original clock menu.

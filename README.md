@@ -2,6 +2,8 @@
 
 Clock with multiple alarms and timers for World of Warcraft Forever (Interface 16001).
 
+Repository: <https://github.com/N3zr0k/CantPlayForever>
+
 ## Funktionen
 
 Siehe [docs/Funktionen.md](docs/Funktionen.md). Änderungen: [CHANGELOG.md](CHANGELOG.md).
@@ -22,3 +24,7 @@ Ordner `CantPlayForever` nach `Interface/AddOns/` kopieren.
 * [docs/Funktionen.md](docs/Funktionen.md)
 * [docs/Files.md](docs/Files.md)
 * [docs/CURSEFORGE.md](docs/CURSEFORGE.md)
+
+## Lizenz
+
+MIT, siehe [LICENSE](LICENSE).

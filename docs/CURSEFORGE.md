@@ -12,4 +12,4 @@ Clock with multiple alarms and timers for WoW Forever.
 * **Effects**: sound, chat message and an adjustable pulsing glow at the screen edge.
 * English, German and French.
 
-Licence: see repository.
+License: MIT.
