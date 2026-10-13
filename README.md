@@ -1,5 +1,7 @@
 # Can't play Forever
 
+[![latest](https://img.shields.io/github/v/release/N3zr0k/CantPlayForever?include_prereleases&sort=date&label=latest)](https://github.com/N3zr0k/CantPlayForever/releases) [![last push](https://img.shields.io/github/last-commit/N3zr0k/CantPlayForever/main?label=last%20push)](https://github.com/N3zr0k/CantPlayForever/commits/main) [![CI](https://img.shields.io/github/actions/workflow/status/N3zr0k/CantPlayForever/ci.yml?branch=main&label=CI)](https://github.com/N3zr0k/CantPlayForever/actions/workflows/ci.yml)
+
 Clock with multiple alarms and timers for World of Warcraft Forever (Interface 16001).
 
 Repository: <https://github.com/N3zr0k/CantPlayForever>

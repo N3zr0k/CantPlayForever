@@ -1,14 +1,27 @@
-# BigWigs-Packager: Der Addon-Ordner liegt im Unterordner CantPlayForever (keine TOC im Repo-Stamm),
-# deshalb package-as. Eingebettete Bibliotheken liegen unter CantPlayForever/Libs (kein externals-Abruf nötig).
+# Ein Repo mit dem Addon-Ordner CantPlayForever. Der Packager baut alles in einen Ordner CantPlayForever
+# und schiebt den Addon-Ordner danach auf die oberste Ebene des ZIPs. Was außen liegt, bleibt über "ignore" draußen.
+# Aufbau wie im Glimpse-Projekt.
 package-as: CantPlayForever
+
+move-folders:
+  CantPlayForever/CantPlayForever: CantPlayForever
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+# Beziehungen auf CurseForge (Kurznamen der Projekte); die Bibliotheken liegen eingebettet unter CantPlayForever/Libs
+embedded-libraries:
+  - ace3
+
 ignore:
-  - .github
-  - docs
   - tests
   - tools
-  - README.md
-  - CHANGELOG.md
-  - LICENSE
+  - docs
+  - .github
   - .luacheckrc
   - .gitattributes
   - .gitignore
+  - README.md
+  - CHANGELOG.md
+  - LICENSE
