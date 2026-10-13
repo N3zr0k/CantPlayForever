@@ -13,6 +13,11 @@ local function ScaledRect(frame)
     return left * scale, bottom * scale, (left + width) * scale, (bottom + height) * scale
 end
 
+local function IsMinimapSymbol(name, parent)
+    if parent ~= _G.Minimap then return true end
+    return name:find('^LibDBIcon') ~= nil or name:find('^MiniMap') ~= nil or name:find('^Minimap') ~= nil
+end
+
 function Clock:IsCoveringSomething()
     local button = self.iconButton
     if not (button and button:IsShown()) then return false end
@@ -22,7 +27,11 @@ function Clock:IsCoveringSomething()
     for _, parent in ipairs({ _G.Minimap, _G.MinimapCluster }) do
         if parent and parent.GetChildren then
             for _, child in ipairs({ parent:GetChildren() }) do
-                if child ~= button and child ~= self.clockRing and child:IsShown()
+                -- Nur Minimap-Symbole zählen: Knöpfe (LibDBIcon, Blizzard) und Frames der Minimap-Leiste.
+                -- Kartenmarkierungen (z. B. GatherMate-Pins) und unbenannte Hilfsframes nicht.
+                local name = child.GetName and child:GetName()
+                if child ~= button and child ~= self.clockRing and name and IsMinimapSymbol(name, parent)
+                    and child:IsShown()
                     and child:GetAlpha() > 0.1 and child.GetRect then
                     local l2, b2, r2, t2 = ScaledRect(child)
                     -- Nur kleine, klickbare Elemente zählen (keine Karte, keine Zonenleiste).
@@ -30,7 +39,7 @@ function Clock:IsCoveringSomething()
                         and (child.IsMouseEnabled and child:IsMouseEnabled()) then
                         local overlapW = math.min(r1, r2) - math.max(l1, l2)
                         local overlapH = math.min(t1, t2) - math.max(b1, b2)
-                        if overlapW > 4 and overlapH > 4 then return true end
+                        if overlapW > 4 and overlapH > 4 then return true, child:GetName() end
                     end
                 end
             end
@@ -91,6 +100,7 @@ function Clock:SetGlow(key, spec, priority)
     local style = self:ParseGlowSpec(spec)
     if not style then return false end
     self.glows[key] = { spec = spec, style = style, priority = priority or 0 }
+    self:Debug('Glow an: %s (%s)', key, spec)
     self:RefreshGlow()
     return true
 end
@@ -98,6 +108,7 @@ end
 function Clock:ClearGlow(key)
     if self.glows and self.glows[key] then
         self.glows[key] = nil
+        self:Debug('Glow aus: %s', key)
         self:RefreshGlow()
     end
 end
@@ -214,9 +225,16 @@ function Clock:RefreshGlow()
 end
 
 function Clock:UpdateCoverGlow()
-    if self:GetClockDiameter() > ns.SMALL_DIAMETER and self:IsCoveringSomething() then
+    local covering, name = false, nil
+    if self:GetClockDiameter() > ns.SMALL_DIAMETER then covering, name = self:IsCoveringSomething() end
+    if covering then
+        if self.coverName ~= name then
+            self.coverName = name
+            self:Debug('Uhr überdeckt: %s', tostring(name))
+        end
         self:SetGlow('cover', 'FF2619, static, 80, fill', 20)
     else
+        self.coverName = nil
         self:ClearGlow('cover')
     end
     self:RefreshGlow()

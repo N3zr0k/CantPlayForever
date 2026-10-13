@@ -6,7 +6,7 @@ local Clock, L = ns.Clock, ns.L
 -- Die Felder werden während des Mouseovers aktualisiert, ohne ihn
 -- bei jeder Sekunde zu schließen oder den Mouseover neu auszulösen.
 function Clock:TooltipSignature()
-    local fields = {self.db.profile.activeTimer and 'timer' or 'no-timer'}
+    local fields = {self.db.profile.activeTimer and 'timer' or 'no-timer', 'cover:' .. tostring(self.coverName)}
     for _, alarm in ipairs(self.db.profile.alarms) do
         if alarm.armed then
             fields[#fields + 1] = tostring(alarm.id) .. ':'
@@ -66,6 +66,12 @@ function Clock:BuildHoverTooltip(tooltip)
     AddHint(tooltip, L.STOPWATCH_HINT)
     AddHint(tooltip, L.BLIZZARD_CLOCK_HINT)
     AddHint(tooltip, self:GetClockDiameter() == 95 and L.DRAG_FREE or L.DRAG_MINIMAP)
+    if self.coverName then
+        -- LibDBIcon-Symbole heißen "LibDBIcon10_<Addon>"; angezeigt wird nur der Addon-Name.
+        local shown = tostring(self.coverName):gsub('^LibDBIcon%d*_', '')
+        tooltip:AddLine(' ')
+        tooltip:AddLine(string.format(L.COVERS_ICON, shown), 0.6, 0.6, 0.6)
+    end
 end
 
 function Clock:UpdateHoverTooltip()

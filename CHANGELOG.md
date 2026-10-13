@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.6
+- Fixed the alarm glow on the clock staying red after an alarm.
+
 ## 0.2.5
 - Fixed the options window content overlapping the new logo and description.
 

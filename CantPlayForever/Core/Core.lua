@@ -358,9 +358,11 @@ end
 function Clock:OnEnable()
     self:RunHook('OnEnable')
     local function Update()
+        -- Alarmmeldung und Leuchten zuerst und einzeln abgesichert: ein Fehler in einem
+        -- Modul-Tick darf das Zurücksetzen nach einem Alarm nicht verhindern.
+        pcall(self.UpdateAlarmNotice, self)
+        pcall(self.UpdateAlarmSoundSequence, self)
         self:RunHook('OnTick')
-        self:UpdateAlarmNotice()
-        self:UpdateAlarmSoundSequence()
     end
     if _G.C_Timer and type(C_Timer.NewTicker) == 'function' then
         self.tick = C_Timer.NewTicker(1, Update)
@@ -376,7 +378,7 @@ function Clock:OnEnable()
         end)
     end
     local getMeta = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
-    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '0.2.5'
+    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '0.2.6'
     self:Print(string.format(L.VERSION_LOADED, tostring(version)))
 end
 

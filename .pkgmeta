@@ -1,7 +1,6 @@
-# BigWigs-Packager: nur der Ordner CantPlayForever wird als Addon verpackt.
-# Eingebettete Bibliotheken liegen unter CantPlayForever/Libs (kein externals-Abruf nötig).
-move-folders:
-  CantPlayForever/CantPlayForever: CantPlayForever
+# BigWigs-Packager: Der Addon-Ordner liegt im Unterordner CantPlayForever (keine TOC im Repo-Stamm),
+# deshalb package-as. Eingebettete Bibliotheken liegen unter CantPlayForever/Libs (kein externals-Abruf nötig).
+package-as: CantPlayForever
 ignore:
   - .github
   - docs
