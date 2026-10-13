@@ -1,0 +1,15 @@
+# BigWigs-Packager: nur der Ordner CantPlayForever wird als Addon verpackt.
+# Eingebettete Bibliotheken liegen unter CantPlayForever/Libs (kein externals-Abruf nötig).
+move-folders:
+  CantPlayForever/CantPlayForever: CantPlayForever
+ignore:
+  - .github
+  - docs
+  - tests
+  - tools
+  - README.md
+  - CHANGELOG.md
+  - LICENSE
+  - .luacheckrc
+  - .gitattributes
+  - .gitignore

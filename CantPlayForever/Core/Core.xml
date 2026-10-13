@@ -1,0 +1,11 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- Kern: gemeinsame Funktionen für alle Module. -->
+    <Script file="Locales\enUS.lua"/>
+    <Script file="Locales\deDE.lua"/>
+    <Script file="Locales\frFR.lua"/>
+    <Script file="Core.lua"/>
+    <Script file="Alert.lua"/>
+    <Script file="ScreenGlow.lua"/>
+    <Script file="RowIcons.lua"/>
+    <Script file="Options.lua"/>
+</Ui>

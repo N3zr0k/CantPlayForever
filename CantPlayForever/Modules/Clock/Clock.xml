@@ -1,0 +1,15 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="Locales\enUS.lua"/>
+    <Script file="Locales\deDE.lua"/>
+    <Script file="Locales\frFR.lua"/>
+    <Script file="SizeSlider.lua"/>
+    <Script file="Clock.lua"/>
+    <Script file="AnalogClock.lua"/>
+    <Script file="Ring.lua"/>
+    <Script file="Glow.lua"/>
+    <Script file="Badges.lua"/>
+    <Script file="Tooltip.lua"/>
+    <Script file="BlizzardClock.lua"/>
+    <Script file="OptionsLogo.lua"/>
+    <Script file="Options.lua"/>
+</Ui>

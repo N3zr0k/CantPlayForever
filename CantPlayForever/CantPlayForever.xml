@@ -1,0 +1,6 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- Ladereihenfolge: Bibliotheken, Kern, Module. -->
+    <Include file="Libs\embeds.xml"/>
+    <Include file="Core\Core.xml"/>
+    <Include file="Modules\Modules.xml"/>
+</Ui>
