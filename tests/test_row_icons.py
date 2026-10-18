@@ -11,8 +11,8 @@ ADDON = ROOT / 'CantPlayForever'
 class RowIconTests(unittest.TestCase):
     def test_shared_controls_and_blizzard_sources(self):
         source = (ADDON / 'Core' / 'RowIcons.lua').read_text(encoding='utf-8')
-        self.assertIn('Interface\\\\Buttons\\\\UI-OptionsButton', source)
-        self.assertIn("BADGE_DIR .. 'delete_bin'", source)
+        self.assertIn("BADGE_DIR .. widget.cpfName", source)
+        self.assertTrue((ADDON / 'Media' / 'Badges' / 'edit_gear.tga').is_file())
         self.assertTrue((ADDON / 'Media' / 'Badges' / 'delete_bin.tga').is_file())
         self.assertIn('icon:SetDesaturated(highlight)', source)
         self.assertIn('icon:SetDesaturated(highlight)', source)

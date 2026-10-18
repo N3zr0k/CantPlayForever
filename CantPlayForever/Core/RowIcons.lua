@@ -1,17 +1,21 @@
 -- Gemeinsame kleine Bedienelemente in Alarm-, Timer- und Health-Listen.
--- Blizzard-Zahnrad sowie eigenes Loeschen-Symbol.
--- Zahnrad: unveraenderte Blizzard-Originalfarbe, beim Hover zuerst
--- entsaettigen, danach blau faerben. Muelleimer: Gold, beim Hover rot.
--- Dadurch braucht das Zahnrad kein kuenstliches zweites Hover-Bild.
+-- Start/Stopp-Pfeil (Blizzard-Atlas), eigenes Zahnrad und eigener Papierkorb.
+-- Zahnrad: Originalfarbe, beim Hover zuerst entsaettigen, danach blau faerben.
+-- Papierkorb: Gold, beim Hover rot. Groesse und Lage jedes Symbols stehen in
+-- der Tuning-Tabelle (ns.T.ROW_*, einstellbar mit dem Frame Debugger).
 local ADDON_NAME, ns = ...
 
 local BADGE_DIR = 'Interface\\AddOns\\CantPlayForever\\Media\\Badges\\'
-local NATIVE_GEAR = 'Interface\\Buttons\\UI-OptionsButton'
+local PLAY_ATLAS = 'common-dropdown-icon-next' -- Pfeil des Auswahlknopfs der Blizzard-Einstellungen
 local TYPES = {
     edit_gear = 'tint', delete_bin = 'tint',
-    hourglass = 'swap', hourglass_on = 'plain',
-    radio_on = 'plain', radio_off = 'plain',
+    play = 'play', play_on = 'play',
 }
+-- Schluessel der Tuning-Tabelle je Symbolart (Groesse, Versatz rechts/oben).
+local TUNE = {
+    play = 'ROW_PLAY', play_on = 'ROW_PLAY', edit_gear = 'ROW_EDIT', delete_bin = 'ROW_DEL',
+}
+local liveIcons = setmetatable({}, {__mode = 'k'})
 local EDIT_HOVER = {0.26, 0.69, 1.00}
 local DELETE_HOVER = {1.00, 0.28, 0.25}
 
@@ -23,13 +27,45 @@ local function IconName(path)
     return path:match('Badges\\([%w_]+)$')
 end
 
+-- Groesse und Lage des Symbols im Knopf aus ns.T (Frame Debugger).
+local function ApplyTune(widget)
+    local prefix = TUNE[widget.cpfName]
+    local icon = widget.image
+    if not (prefix and icon) then return end
+    local T = ns.T or {}
+    local size = T[prefix .. '_SIZE'] or 18
+    icon:SetSize(size, size)
+    if widget.frame and icon.SetPoint then
+        icon:ClearAllPoints()
+        icon:SetPoint('TOP', widget.frame, 'TOP', T[prefix .. '_X'] or 0, -5 + (T[prefix .. '_Y'] or 0))
+    end
+end
+
+-- Alle sichtbaren Symbole neu ausrichten (nach Aenderung der Tuning-Werte).
+function ns.RefreshRowIcons()
+    for widget in pairs(liveIcons) do
+        if widget.cpfKind then ApplyTune(widget) end
+    end
+end
+
+-- Auch als Clock-Methode, damit der Frame Debugger sie aufrufen kann.
+if ns.Clock then function ns.Clock:RefreshRowIcons() ns.RefreshRowIcons() end end
+
 local function ApplyStyle(widget, hovered)
     local icon = widget.image
     if not icon then return end
     local kind, name = widget.cpfKind, widget.cpfName
-    if kind == 'swap' then
-        -- Bestehendes Sanduhr-Verhalten beibehalten.
-        icon:SetTexture(hovered and widget.cpfPath or widget.cpfPath .. '_grey')
+    if kind == 'play' then
+        -- Start/Stopp: im Ruhezustand die Originalfarben,
+        -- bei laufendem Timer entsättigt und grün eingefärbt.
+        local alpha = widget.disabled and 0.45 or 1
+        local active = name == 'play_on'
+        if icon.SetDesaturated then icon:SetDesaturated(active) end
+        if active then
+            icon:SetVertexColor(0.25, 1, 0.25, alpha)
+        else
+            icon:SetVertexColor(1, 1, 1, alpha)
+        end
     elseif kind == 'tint' then
         if name == 'edit_gear' then
             -- Im Ruhezustand die originalen WoW-Farben behalten. Erst fuer
@@ -57,14 +93,15 @@ local function SetImageStyle(widget, path)
         if widget.image.SetDesaturated then widget.image:SetDesaturated(false) end
         widget.image:SetVertexColor(1, 1, 1, widget.disabled and 0.5 or 1)
     end
-    if widget.cpfName == 'edit_gear' then
-        -- Diese Blizzard-Textur ist auch im Forever-/Classic-Client vorhanden.
-        widget.image:SetTexture(NATIVE_GEAR)
+    if widget.cpfKind == 'play' then
+        widget.image:SetAtlas(PLAY_ATLAS)
+    elseif widget.cpfKind == 'tint' then
+        widget.image:SetTexture(BADGE_DIR .. widget.cpfName)
         widget.image:SetTexCoord(0, 1, 0, 1)
-    elseif widget.cpfName == 'delete_bin' then
-        -- Immer das eigene Symbol verwenden, auch wenn ein Blizzard-Atlas vorhanden ist.
-        widget.image:SetTexture(BADGE_DIR .. 'delete_bin')
-        widget.image:SetTexCoord(0, 1, 0, 1)
+    end
+    if widget.cpfKind then
+        liveIcons[widget] = true
+        ApplyTune(widget)
     end
     for _, region in ipairs({widget.frame:GetRegions()}) do
         if region.GetDrawLayer and region:GetDrawLayer() == 'HIGHLIGHT' then
@@ -102,6 +139,13 @@ if AceGUI and not AceGUI.cpfIconWrapped then
             widget.SetImage = function(this, path, ...)
                 setImage(this, path, ...)
                 SetImageStyle(this, path)
+            end
+            local setImageSize = widget.SetImageSize
+            if setImageSize then
+                widget.SetImageSize = function(this, ...)
+                    setImageSize(this, ...)
+                    if this.cpfKind then ApplyTune(this) end
+                end
             end
             local setDisabled = widget.SetDisabled
             if setDisabled then

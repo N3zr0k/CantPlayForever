@@ -136,7 +136,7 @@ assert(clock.healthNoticeIcon.texture:find('drink_horde', 1, true))
 clock:ShowHealthNotice('movement', 'Titel', 'Aufstehen')
 assert(clock.healthNoticeIcon.texture:find('movement_horde', 1, true))
 clock:ShowHealthNotice('eyes', 'Titel', 'Blinzeln')
-assert(clock.healthNoticeIcon.texture:find('eye_break_all_factions', 1, true))
+assert(clock.healthNoticeIcon.texture:find('eye_horde', 1, true))
 clock.db.profile.effects.health.iconEnabled = false
 clock:ShowHealthNotice('eyes', 'Titel', 'Blinzeln')
 assert(not clock.healthNoticeIcon.visible)
@@ -166,7 +166,8 @@ assert(clock.healthNotice.visible and clock.healthNoticePreviewActive)
 assert(clock.healthNoticeLabel.text == ns.L.HEALTH_PREVIEW_TITLE .. '\n' .. ns.L.HEALTH_PREVIEW_MESSAGE)
 assert(clock.healthNoticeIcon.texture:find('faction_alliance', 1, true))
 assert(previews[#previews].override == nil)
-assert(#clock.chat == messagesBefore and sounds == soundsBefore and glows == glowsBefore)
+assert(#clock.chat == messagesBefore and glows == glowsBefore)
+assert(sounds == soundsBefore + 1) -- Der Effekt-Test spielt den Hinweiston immer
 assert(clock.healthSchedules.drinking.nextAt == scheduleBefore)
 -- Wiederholte Klicks verlaengern die Vorschau; veraltete Timer ignorieren.
 faction = 'Horde'
@@ -195,7 +196,7 @@ assert(math.abs(clock.healthNoticeIcon.alpha - 0.75) < 0.001)
 assert(clock.healthNoticeIcon.anchor[5] == -24)
 assert(previews[#previews].override == custom)
 assert(clock.healthSchedules.drinking.nextAt == scheduleBefore)
-assert(#clock.chat == messagesBefore and sounds == soundsBefore and glows == glowsBefore)
+assert(#clock.chat == messagesBefore and glows == glowsBefore)
 -- Ein regulaerer Hinweis darf nicht durch einen alten Vorschau-Timer verschwinden.
 clock:ShowHealthNotice('movement', 'Echte Erinnerung', 'Jetzt bewegen')
 callbacks[3]()
@@ -208,6 +209,7 @@ assert(not clock.healthNotice.visible)
 combat = false
 
 -- Alle drei Kategorien erinnern im Core-Takt; Kampf/Instanz bleibt Chat-only.
+sounds = 0
 now, combat = 1200, true
 health.OnTick(clock)
 assert(not clock.healthNotice.visible and #clock.chat == 1 and sounds == 0 and glows == 0)

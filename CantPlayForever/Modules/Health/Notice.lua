@@ -7,7 +7,7 @@ local MEDIA = 'Interface\\AddOns\\CantPlayForever\\Media\\Health\\'
 local CATEGORY_ICONS = {
     movement = { Alliance = MEDIA .. 'movement_alliance', Horde = MEDIA .. 'movement_horde' },
     drinking = { Alliance = MEDIA .. 'drink_alliance', Horde = MEDIA .. 'drink_horde' },
-    eyes = { Alliance = MEDIA .. 'eye_break_all_factions', Horde = MEDIA .. 'eye_break_all_factions' },
+    eyes = { Alliance = MEDIA .. 'eye_alliance', Horde = MEDIA .. 'eye_horde' },
 }
 -- Eigene transparente Health-Testwappen, entsprechend der Spielerfraktion.
 -- Kategorie-Erinnerungen verwenden weiterhin ihre eigenen Hintergrund-Icons.
@@ -85,7 +85,7 @@ function Clock:ShowHealthNotice(category, title, message)
 end
 
 -- Vorschau mit derselben Schrift, Icon-Transparenz, Position und Effektfarbe
--- wie eine echte Health-Erinnerung. Keine Chatnachricht, kein Ton und keine
+-- wie eine echte Health-Erinnerung, inklusive Hinweiston (immer). Keine Chatnachricht und keine
 -- Veraenderung von Sessionzeit, Prioritaeten oder Wiederholungsintervallen.
 function Clock:PreviewHealthEffect(category)
     if self:IsHealthRestricted() then return end
@@ -109,6 +109,7 @@ function Clock:PreviewHealthEffect(category)
     self:ShowHealthNotice(category, title, message)
     self.healthNoticePreviewActive = true
     self:PreviewScreenGlow('health', override)
+    self:PlayHealthSound(true)
     -- Der Glow hat seinen eigenen Token/Timeout. Nur die eigene Vorschau
     -- verbergen: echte, zwischenzeitlich gestartete Meldungen bleiben stehen.
     if _G.C_Timer and type(_G.C_Timer.After) == 'function' then

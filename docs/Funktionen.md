@@ -11,7 +11,7 @@
   * Aktive Kategorien: **Trinken** (Standard 30 Minuten, Slider 5–120), **Bewegung** (45 Minuten, Slider 5–180) und **Augenpausen** (20 Minuten, Slider 5–60). Alle laufen anhand der Sessionzeit ab Login; `/reload` setzt die Intervalle nicht zurück. Die Erinnerungen sind unabhängig von Alarmen und Timern.
   * **Kollisionsregel:** Liegen geplante Health-Termine höchstens 5 Minuten auseinander, gewinnt **Trinken > Bewegung > Augenpause**. Unterlegene Erinnerungen werden für diesen Durchlauf ausgelassen und nicht später nachgeholt; es gibt auch keine doppelten Chatmeldungen oder Töne. Die Regel berücksichtigt bevorstehende Termine und gilt ebenfalls bei gleichzeitig überfälligen Kategorien nach Lag. Nächste Fälligkeiten bleiben erhalten.
   * Humorvolle, zufällig ausgewählte Sprüche in Deutsch, Englisch und Französisch; Allianz/Horde automatisch erkannt, Tonfall freundlich/lustig/frech einstellbar. Fraktionsabhängige Trink- und Bewegungsicons sowie Augen-Icon mit einstellbarer Transparenz liegen hinter dem gut konturierten Bildschirmtext.
-  * Bildschirmanzeige, Chat oder beides; optional leiser WoW-Hinweiston. Im Kampf und in Instanzen kommen gewonnene Health-Erinnerungen ausschließlich im Chat an, ohne Bildschirm, Glow oder Ton.
+  * Bildschirmanzeige, Chat oder beides; optional WoW-Hinweiston (der Effekt-Test spielt ihn immer). Im Kampf und in Instanzen kommen gewonnene Health-Erinnerungen ausschließlich im Chat an, ohne Bildschirm, Glow oder Ton.
 
 Weiteres Health-Konzept: eigene längere 20-20-20-Übungsanleitung und optional volk-/klassenspezifische Sprüche.
 

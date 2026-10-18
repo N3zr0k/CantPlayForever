@@ -82,6 +82,9 @@ local TUNE_DEFAULTS = {
     OPT_CLOSE_X = 1.5, OPT_CLOSE_Y = 3.5, OPT_CLOSE_SIZE = 28.5,     -- rotes X (Versatz zur Fensterecke oben rechts)
     OPT_TITLE_X = 63, OPT_TITLE_Y = -33, OPT_TAGLINE_DY = -2,    -- Name und Untertitel (links oben)
     OPT_CONTENT_TOP = 60,                                       -- Beginn des Inhalts (Abstand zur Oberkante)
+    ROW_PLAY_SIZE = 18, ROW_PLAY_X = 0, ROW_PLAY_Y = 0,         -- Listen-Symbole: Start/Stopp-Pfeil (Größe, Versatz rechts/oben)
+    ROW_EDIT_SIZE = 22, ROW_EDIT_X = 0, ROW_EDIT_Y = 0,         -- Zahnrad (Bearbeiten)
+    ROW_DEL_SIZE = 18, ROW_DEL_X = 0, ROW_DEL_Y = 0,            -- Papierkorb
     ALARM_SCALE = 1, TIMER_SCALE = 1,                              -- Einzelgrößen (Faktor)
     ALARM_X = -24, ALARM_Y = 25, TIMER_X = -30.5, TIMER_Y = 12, -- Statussymbole (Mitte relativ zum Button)
 }

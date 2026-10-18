@@ -1,5 +1,5 @@
 -- Test des tatsachlichen RowIcons-Lua-Codes mit einem minimalen AceGUI/WoW-Mock.
-local ns = {}
+local ns = {T = {ROW_PLAY_SIZE = 18, ROW_EDIT_SIZE = 20, ROW_EDIT_X = 1, ROW_EDIT_Y = 2, ROW_DEL_SIZE = 16}}
 local availableAtlas = false
 C_Texture = { GetAtlasInfo = function(name)
     if availableAtlas and name == 'common-icon-delete' then return {width = 16, height = 16} end
@@ -17,6 +17,9 @@ AceGUI.Create = function(self, kind)
     function image:SetTexture(path) self.path = path; self.atlas = nil end
     function image:SetAtlas(atlas) self.atlas = atlas; self.path = nil end
     function image:SetTexCoord() end
+    function image:SetSize(w, h) self.w, self.h = w, h end
+    function image:ClearAllPoints() end
+    function image:SetPoint(...) self.point = {...} end
     function image:SetDesaturated(value) self.desaturated = value end
     function image:SetVertexColor(...) self.color = {...} end
     local highlight = {alpha = 1}
@@ -41,7 +44,7 @@ LibStub = function(name) assert(name == 'AceGUI-3.0'); return AceGUI end
 assert(loadfile('CantPlayForever/Core/RowIcons.lua'))('CantPlayForever', ns)
 local gear = AceGUI:Create('Icon')
 gear:SetImage(ns.RowIcon('edit_gear'))
-assert(gear.image.path == 'Interface\\Buttons\\UI-OptionsButton')
+assert(gear.image.path:find('Badges\\edit_gear', 1, true), 'Gear uses the own texture')
 assert(gear.image.desaturated == false, 'Idle gear must retain its original colors')
 assert(gear.image.color[1] == 1 and gear.image.color[3] == 1, 'Idle gear must have no tint')
 gear.frame.handlers.OnEnter()
@@ -56,14 +59,30 @@ gear.frame.handlers.OnEnter()
 assert(gear.image.desaturated == false and gear.image.color[1] == 1 and gear.image.color[4] == .45, 'Disabled gear must remain original, dimmed')
 gear:SetDisabled(false)
 
+local play = AceGUI:Create('Icon')
+play:SetImage(ns.RowIcon('play'))
+assert(play.image.atlas == 'common-dropdown-icon-next', 'Play uses the Blizzard arrow atlas')
+assert(play.image.desaturated == false and play.image.color[1] == 1 and play.image.color[2] == 1, 'Idle button keeps original color')
+play:SetImage(ns.RowIcon('play_on'))
+assert(play.image.desaturated == true and play.image.color[1] < .5 and play.image.color[2] == 1 and play.image.color[3] < .5, 'Active button is desaturated and green')
+play.frame.handlers.OnLeave()
+assert(play.image.color[2] == 1 and play.image.color[1] < .5, 'Active play button stays green after hover')
+
 local delete = AceGUI:Create('Icon')
 delete:SetImage(ns.RowIcon('delete_bin'))
-assert(delete.image.path:find('delete_bin'), 'Forever fallback must be provided')
+assert(delete.image.path:find('delete_bin'), 'Delete uses the own texture')
 assert(not delete.image.desaturated, 'Idle delete icon keeps its gold colors')
 delete.frame.handlers.OnEnter()
 assert(delete.image.color[1] == 1 and delete.image.color[2] < .3, 'Delete must turn red')
 delete.frame.handlers.OnLeave()
 assert(delete.image.color[1] == 1 and delete.image.color[2] == 1, 'Delete must return to untinted gold')
+
+-- Tuning (Frame Debugger): Groesse und Lage je Symbolart, auch nachtraeglich.
+assert(gear.image.w == 20 and gear.image.point[4] == 1 and gear.image.point[5] == -3, 'Edit tuning applied')
+assert(delete.image.w == 16 and play.image.w == 18, 'Delete/play tuning applied')
+ns.T.ROW_DEL_SIZE = 22
+ns.RefreshRowIcons()
+assert(delete.image.w == 22, 'Refresh applies new tuning values')
 
 -- Bereits genutzte AceGUI-Widgets verlieren ihre Markierung beim Recycling.
 gear:SetImage('Interface\\Icons\\INV_Misc_Note_01')

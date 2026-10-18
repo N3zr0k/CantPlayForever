@@ -1,4 +1,4 @@
-# Health – Stand 0.3.29-alpha.1
+# Health – Stand 0.3.36-beta.1
 
 Das optionale Modul ist standardmäßig ausgeschaltet (Allgemein → Module → Health). Die drei Erinnerungskategorien **Bewegung**, **Trinken** und **Augenpausen** sind innerhalb des Moduls standardmäßig aktiviert.
 
@@ -44,7 +44,7 @@ Im Kampf und in Instanzen (auch Dungeon, Raid, Arena, Schlachtfeld) werden Healt
 
 - `Modules/Health/{Messages,Notice,Reminders,Options,TextEditor}.lua`: Texte, Bildschirmdarstellung, Session-Timing, AceConfig-Untertabs sowie das mehrzeilige Eingabefeld ohne zusätzlichen Annehmen-Knopf.
 - `Core/ScreenGlow.lua`: individuelle Farbwahl und fraktionsabhängige, zum Icon passende Fallbackfarben.
-- `Media/Health/*.tga`: die Grafikdateien für zwei Fraktionen und die gemeinsame Augenpause; PNG-Quellen in `docs/images/health/`.
+- `Media/Health/*.tga`: die Grafikdateien je Fraktion (Bewegung, Trinken, Augenpause); PNG-Quellen in `docs/images/health/`.
 - `Modules/Health/Locales/{deDE,enUS,frFR}.lua`: vollständige Lokalisierung.
 
 Der Ingame-Test unter WoW Forever steht noch aus.

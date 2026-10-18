@@ -69,7 +69,7 @@ local function TimerArgs()
     for index, preset in ipairs(Clock.db.profile.presets) do
         local current = preset
         local key = 'preset_' .. tostring(current.id)
-        local base = 20 + index -- Zeile: Trennlinie, Haken, Sanduhr, Zahnrad, Mülleimer, Text, Maske
+        local base = 20 + index -- Zeile: Trennlinie, Haken, Playknopf, Zahnrad, Mülleimer, Text, Maske
         local function Running()
             local timer = Clock.db.profile.activeTimer
             return timer and timer.presetID == current.id
@@ -110,10 +110,10 @@ local function TimerArgs()
                 Clock:NotifyOptions()
             end,
         }
-        args[key .. '_toggle'] = { -- Sanduhr: starten/stoppen; läuft der Timer, bleibt sie grün
+        args[key .. '_toggle'] = { -- Playknopf: starten/stoppen; läuft der Timer, ist er grün
             type = 'execute', name = '', order = base + 0.02, width = 0.147,
             desc = function() return Running() and L.STOP or L.START end,
-            image = function() return ns.RowIcon(Running() and 'hourglass_on' or 'hourglass') end,
+            image = function() return ns.RowIcon(Running() and 'play_on' or 'play') end,
             imageWidth = 18, imageHeight = 18,
             func = function()
                 if Running() then

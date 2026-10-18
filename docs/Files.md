@@ -20,23 +20,16 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Core/Locales/frFR.lua` | Texte frFR | – | – |
 | `Core/Options.lua` | Optionen Tab Allgemein, Effekte, Bestätigungsabfrage Löschen, Modulschalter | modules, scope | modules, alarmConfirmDelete, alarmRepeats, alarmSound, oapLevel, glowSpeed, playSound, screenGlow, screenGlowSkipInstances, screenGlowSpec |
 | `Core/RowIcons.lua` | Icon-Buttons in Listenzeilen (Blizzard-Zahnrad, Blizzard-Löschatlas mit Fallback, graue Symbole mit blauer/roter Hover-Farbe, Tooltip) | – | – |
+| `Dev/Tuning.lua` | Meldet Tuning-Werte, Gruppen, Anwenden-Logik und Aktionen beim Frame Debugger an (nur Repo, per `.pkgmeta` aus dem Release ausgeschlossen) | – | – |
+| `Dev/Stage.lua`, `Dev/FrameDump.lua`, `Dev/Probe.lua` | Testbühne, Rahmen-Diagnose und `/cpf probe`-Befehle für den Frame Debugger (nur Repo) | – | – |
 | `Core/ScreenGlow.lua` | Leuchten am Bildschirmrand | screenGlow, screenGlowSkipInstances, screenGlowSpec | – |
 | `Media/Analog/dial_dots_small.tga` | Grafik | – | – |
 | `Media/Analog/dial_ticks.tga` | Grafik | – | – |
 | `Media/Analog/hand_hour.tga` | Grafik | – | – |
-| `Media/Analog/hand_hour_small.tga` | Grafik | – | – |
 | `Media/Analog/hand_minute.tga` | Grafik | – | – |
 | `Media/Analog/hand_second.tga` | Grafik | – | – |
 | `Media/Badges/alarm_icon.tga` | Grafik | – | – |
 | `Media/Badges/delete_bin.tga` | Grafik | – | – |
-| `Media/Badges/delete_bin_grey.tga` | Grafik | – | – |
-| `Media/Badges/edit_gear.tga` | Grafik | – | – |
-| `Media/Badges/edit_gear_grey.tga` | Grafik | – | – |
-| `Media/Badges/hourglass.tga` | Grafik | – | – |
-| `Media/Badges/hourglass_grey.tga` | Grafik | – | – |
-| `Media/Badges/hourglass_on.tga` | Grafik | – | – |
-| `Media/Badges/radio_off.tga` | Grafik | – | – |
-| `Media/Badges/radio_on.tga` | Grafik | – | – |
 | `Media/Badges/timer_icon.tga` | Grafik | – | – |
 | `Media/ClockLarge.tga` | Grafik | – | – |
 | `Media/Logos/alarm_logo.tga` | Grafik | – | – |
@@ -108,13 +101,14 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `.pkgmeta`, `.luacheckrc`, `.gitignore`, `.gitattributes` | Packager- und Lint-Konfiguration |
 
 | `Core/Playtime.lua` | Reload-resistente Session, letzte Sitzung, frische Server-/played-Werte bei Shift, bestätigte Charakter-Samples und separat gespeicherte Logout-Schätzstände | `db.global.playtime.characters[GUID]` | – |
-| `Media/Logos/cantplayforever_text.tga` | Überlagerter Originalschriftzug im Allgemein-Tab (256px transparenter TGA-Canvas, 255x131 Quellpixel) | – | – |
 
 - `tests/test_effects.py`: Sicherung der getrennten Effekte und Altprofil-Migration.
 
 - Effektoptionen: `Core/Options.lua` nutzt AceConfig-Farbwaehler, Dropdown und Slider; `Core/ScreenGlow.lua` liest/schreibt kompatible `effects.<modul>.spec`-Angaben, inkl. `periodSeconds`. `Core/Alert.lua` nutzt die Modulart/Periodendauer auch fuer den Uhr-Alarm-Glow.
 
-| `Media/Health/{movement,drink}_{alliance,horde}.tga`, `eye_break_all_factions.tga` | Transparente 256×256-TGA-Icons (Bewegung, Trinken, Augenpause) | – | – |
+| `Media/Health/{movement,drink,eye}_{alliance,horde}.tga` | Transparente 256×256-TGA-Icons (Bewegung, Trinken, Augenpause) | – | – |
 
 | `Media/Health/faction_{alliance,horde}.tga` | Transparente 256×256-Testwappen für Health-Effektvorschau | – | – |
-| `docs/images/health/*.png` | PNG-Quellen der Health-Grafiken (nicht im Addon-Paket) | – | – |
+| `docs/images/health/*.png` | PNG-Quellen der Health-Grafiken (Bewegung/Trinken je Fraktion, Augenpause) (nicht im Addon-Paket) | – | – |
+| `docs/images/timer_hourglass.png` | Quelle der Sanduhr im Timer-Menü (nicht im Addon-Paket) | – | – |
+| `docs/images/delete_bin.png` | Quelle des goldenen Papierkorbs (nicht im Addon-Paket) | – | – |

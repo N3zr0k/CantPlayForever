@@ -27,7 +27,7 @@ class HealthNoticeTests(unittest.TestCase):
     def test_faction_icons_and_usable_tga_assets(self):
         text = (HEALTH / 'Notice.lua').read_text(encoding='utf-8')
         for asset in ('movement_alliance', 'movement_horde', 'drink_alliance',
-                      'drink_horde', 'eye_break_all_factions'):
+                      'drink_horde', 'eye_alliance', 'eye_horde'):
             self.assertIn("'" + asset + "'", text)
             path = ROOT / 'CantPlayForever/Media/Health' / (asset + '.tga')
             self.assertTrue(path.is_file(), asset)
@@ -69,7 +69,7 @@ class HealthNoticeTests(unittest.TestCase):
         self.assertIn('if not icons then return FACTION_ICONS[faction] end', code)
         self.assertIn("movement = { Alliance = MEDIA .. 'movement_alliance'", code)
         self.assertIn("drinking = { Alliance = MEDIA .. 'drink_alliance'", code)
-        self.assertIn("eyes = { Alliance = MEDIA .. 'eye_break_all_factions'", code)
+        self.assertIn("eyes = { Alliance = MEDIA .. 'eye_alliance', Horde = MEDIA .. 'eye_horde'", code)
         for basename in ('faction_alliance', 'faction_horde'):
             path = ROOT / 'CantPlayForever/Media/Health' / (basename + '.tga')
             self.assertTrue(path.is_file(), basename)
@@ -83,7 +83,7 @@ class HealthNoticeTests(unittest.TestCase):
             self.assertEqual(raw[offset + 3], 0)  # fully transparent background
             center = offset + (128 * 256 + 128) * 4
             self.assertGreater(raw[center + 3], 200)  # opaque emblem
-            self.assertTrue((ROOT / 'docs/images/health' / (basename + '.png')).is_file())
+            self.assertTrue((ROOT / 'CantPlayForever/Media/Health' / (basename + '.tga')).is_file())
 
     def test_existing_safety_and_lifetime_remain(self):
         text = (HEALTH / 'Notice.lua').read_text(encoding='utf-8')

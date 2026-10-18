@@ -10,6 +10,16 @@ local COLLISION_WINDOW_SECONDS = 5 * 60
 local INTERVAL_MAX = { movement = 180, drinking = 120, eyes = 60 }
 local DEFAULT_INTERVAL = { movement = 45, drinking = 30, eyes = 20 }
 
+-- Hinweiston (Bereitschaftscheck), bei Erinnerungen nur wenn in den Health-Optionen
+-- eingeschaltet, im Effekt-Test (force) immer. Mit der Blizzard-ID als Fallback,
+-- falls SOUNDKIT im Forever-Client die Konstante nicht kennt.
+function Clock:PlayHealthSound(force)
+    local h = self.db and self.db.profile and self.db.profile.health
+    if not (force or (h and h.sound == true)) or type(_G.PlaySound) ~= 'function' then return end
+    local id = (_G.SOUNDKIT and _G.SOUNDKIT.READY_CHECK) or 8960
+    pcall(_G.PlaySound, id, 'Master')
+end
+
 local function SessionTime()
     if type(_G.GetTime) == 'function' then return _G.GetTime() end
     return ns.Now()
@@ -177,12 +187,7 @@ function Clock:ShowHealthReminder(category)
     if method == 'chat' or method == 'both' then
         self:AnnounceHealthChat(category, message)
     end
-    if h.sound == true and type(_G.PlaySound) == 'function' then
-        local kit = _G.SOUNDKIT
-        if kit and kit.IG_MAINMENU_OPTION_CHECKBOX_ON then
-            _G.PlaySound(kit.IG_MAINMENU_OPTION_CHECKBOX_ON, 'Master')
-        end
-    end
+    self:PlayHealthSound()
     local entry = {category = category, title = title, message = message, method = method}
     if self.healthVisualUntil then
         self.healthVisualQueue = self.healthVisualQueue or {}

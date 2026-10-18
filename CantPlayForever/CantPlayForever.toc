@@ -4,10 +4,16 @@
 ## Notes-deDE: Blizzard-Uhr mit mehreren Alarmen und Timern (WoW Forever)
 ## Notes-frFR: Horloge avec alarmes et minuteurs multiples (WoW Forever)
 ## Author: N3zr0k
-## Version: 0.3.29-alpha.1
+## Version: 0.3.36-beta.1
 ## IconTexture: Interface\AddOns\CantPlayForever\Media\Logos\allgemein_logo.tga
 ## SavedVariables: CantPlayForeverSettings, BetterClockSettings
-## OptionalDeps: OAPDebug
+## OptionalDeps: OAPDebug, Frame_Debugger
 ## X-Curse-Project-ID: 1740064
 
 CantPlayForever.xml
+
+# Entwicklung (nur im Repo; fehlt im Release-ZIP und wird dann übersprungen)
+Dev\Stage.lua
+Dev\Tuning.lua
+Dev\FrameDump.lua
+Dev\Probe.lua

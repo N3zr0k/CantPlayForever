@@ -15,6 +15,7 @@ embedded-libraries:
   - ace3
 
 ignore:
+  - CantPlayForever/Dev
   - tests
   - tools
   - docs
