@@ -2,6 +2,9 @@ local ADDON_NAME, ns = ...
 if not ns.Clock then return end
 local Clock, L, Between, Now = ns.Clock, ns.L, ns.Between, ns.Now
 
+-- Die visuelle Anzeige hat eine feste Lebensdauer. Nur die Tonfolge nutzt alarmRepeats.
+local ALERT_VISIBLE_SECONDS = 9
+
 -- Vier im Spiel vorhandene SoundKits (Blizzard-ID als Fallback, falls
 -- SOUNDKIT im Forever-Client die jeweilige Konstante nicht definiert).
 local ALARM_SOUNDS = {
@@ -54,10 +57,12 @@ function Clock:InitializeAlarmNotice()
     frame:SetSize(720, 170)
     frame:SetPoint('CENTER', UIParent, 'CENTER', 0, 135)
     frame:SetFrameStrata('HIGH')
-    local text = frame:CreateFontString(nil, 'OVERLAY', 'GameFontNormalHuge')
+    -- Gleiche Schrift wie die Health-Meldung: Zonenwechsel-Optik mit dicker Kontur.
+    local text = frame:CreateFontString(nil, 'OVERLAY', 'GameFontNormalLarge')
     text:SetPoint('CENTER', frame, 'CENTER')
     text:SetWidth(700)
     text:SetJustifyH('CENTER')
+    text:SetFont(_G.STANDARD_TEXT_FONT or 'Fonts\\FRIZQT__.TTF', 24, 'THICKOUTLINE')
     text:SetTextColor(1, 0.14, 0.14, 1)
     text:SetShadowColor(0, 0, 0, 1)
     text:SetShadowOffset(2, -2)
@@ -79,29 +84,50 @@ function Clock:UpdateAlarmNotice()
     if #self.recentAlerts == 0 then
         self.noticeFrame:Hide()
         self:ClearGlow('alert')
-        self:HideScreenGlow()
+        if self.activeScreenGlowSource ~= 'health' and not self.screenGlowPreviewActive then self:HideScreenGlow() end
         return
     end
     -- Nur zwei Zeilen: Addonname, dann Nachricht des letzten Alarms.
     local active = self.recentAlerts[#self.recentAlerts]
     self.noticeText:SetText("Can't play Forever\n" .. active.message)
+    if active.color then
+        self.noticeText:SetTextColor(unpack(active.color))
+    else
+        self.noticeText:SetTextColor(1, 0.14, 0.14, 1)
+    end
     self.noticeFrame:Show()
 end
 
-function Clock:Alert(message)
+function Clock:Alert(message, source, alarm)
+    source = source or 'alarms'
     message = tostring(message or L.ALARM_GENERIC)
     self:Debug('Alert: %s', message)
     message = message:gsub('[\r\n\t]', ' '):gsub('|', '')
     self:InitializeAlarmNotice()
-    local number = Between(self.db.profile.alarmRepeats, 1, 10)
-    local visibleFor = math.max(9, (number - 1) * 2 + 3)
+    local override = source == 'alarms' and self:GetAlarmEffectOverride(alarm) or nil
+    -- Textfarbe = Effektfarbe des Alarmtyps (ohne eigenen Effekt: Alarm-Standard).
+    local noticeStyle = self:GetEffectStyle(source, override)
+    local noticeColor = noticeStyle and noticeStyle.color
+    local displayMessage = source == 'alarms' and alarm and ns.AlarmDisplayName(alarm, message, 24)
+        or message
     self.recentAlerts[#self.recentAlerts + 1] = {
-        message = message, expiresAt = NoticeTime() + visibleFor,
+        message = displayMessage, color = noticeColor,
+        source = source, expiresAt = NoticeTime() + ALERT_VISIBLE_SECONDS,
     }
     -- Rot, schnell pulsierend, solange die Meldung sichtbar ist (Priorität 40).
-    local speed = Between(tonumber(self.db.profile.glowSpeed) or 1, 0.3, 5) -- Pulse pro Sekunde
-    self:SetGlow('alert', string.format('FF2619, pulse, %.3f, 100, fill', 1 / speed), 40)
-    self:ShowScreenGlow()
+    local style = self:GetEffectStyle(source, override)
+    -- Der Uhr-Alarm-Glow uebernimmt Farbe, Effektart und Sekundendauer aus dem
+    -- Modulprofil; der Bildschirmrand nutzt separat dessen Prozentwert.
+    local mode = style and style.mode or 'pulse'
+    local colorHex = self:GetEffectColorHex(source, override)
+    local period = self:GetEffectPeriod(source, override)
+    local ringSpec = mode == 'static'
+        and string.format('%s, static, 100, fill', colorHex)
+        or string.format('%s, %s, %.1f, 100, fill', colorHex, mode, period)
+    -- Genau ein visueller Ausloeser pro Alarm. Auch die spaeteren Toene aus
+    -- UpdateAlarmSoundSequence duerfen niemals die Effekte neu starten.
+    self:SetGlow('alert', ringSpec, 40)
+    self:ShowScreenGlow(source, false, override)
     self:UpdateAlarmNotice()
     self:StartAlarmSoundSequence()
 end

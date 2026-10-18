@@ -8,16 +8,18 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 
 | Datei | Beschreibung | DB lesen | DB schreiben |
 |---|---|---|---|
-| `CantPlayForever.toc` | Addon-Manifest (Version, SavedVariables CantPlayForeverSettings, alt: BetterClockSettings) | – | – |
+| `CantPlayForever.toc` | Addon-Manifest (Version, SavedVariables CantPlayForeverSettings, alt: BetterClockSettings; OptionalDeps OAPDebug) | – | – |
 | `CantPlayForever.xml` | Ladereihenfolge: Libs, Core, Modules | – | – |
-| `Core/Alert.lua` | Alarm-Auslösung: Ton, Chat, Bildschirmleuchten | alarmRepeats, alarmSound, glowSpeed, playSound | – |
-| `Core/Core.lua` | Addon-Objekt, AceDB, Defaults, Migration der Alarme, Slash-Befehle | debug, modules | scope |
-| `Core/Core.xml` | Ladeliste Core | – | – |
+| `Core/AddonCompartment.lua` | Optionaler Blizzard-Addon-Menü-Eintrag; öffnet Optionen, zeigt Bedienungs-Tooltip | – | – |
+| `Core/Alert.lua` | Alarm-Auslösung: Ton, Chat, Bildschirmleuchten; Alarmtext in Health-Schrift und Effektfarbe | alarmRepeats, alarmSound, glowSpeed, playSound | – |
+| `Core/Core.lua` | Addon-Objekt, AceDB, Defaults, Migration der Alarme und des Wellness-Modulschalters auf Health, Slash-Befehle, Registrierung des Compartment-Eintrags | oapLevel, modules, health | scope, modules.health (Migration) |
+| `Core/Core.xml` | Ladeliste Core: Core.lua, OAPDebug.lua, AddonCompartment.lua und weitere Komponenten | – | – |
+| `Core/OAPDebug.lua` | Optionale OAP-Debug-Bridge (Register/Log, native Metrics, Inspector, Watch, Chat-Kopie, Performance und Fehlerisolierung) | global.oapLevel | – |
 | `Core/Locales/deDE.lua` | Texte deDE | – | – |
 | `Core/Locales/enUS.lua` | Texte enUS | – | – |
 | `Core/Locales/frFR.lua` | Texte frFR | – | – |
-| `Core/Options.lua` | Optionen Tab Allgemein, Effekte, Bestätigungsabfrage Löschen | modules, scope | alarmConfirmDelete, alarmRepeats, alarmSound, debug, glowSpeed, playSound, screenGlow, screenGlowSkipInstances, screenGlowSpec |
-| `Core/RowIcons.lua` | Icon-Buttons in Listenzeilen (Grau/Farbe bei Mouseover, Tooltip) | – | – |
+| `Core/Options.lua` | Optionen Tab Allgemein, Effekte, Bestätigungsabfrage Löschen, Modulschalter | modules, scope | modules, alarmConfirmDelete, alarmRepeats, alarmSound, oapLevel, glowSpeed, playSound, screenGlow, screenGlowSkipInstances, screenGlowSpec |
+| `Core/RowIcons.lua` | Icon-Buttons in Listenzeilen (Blizzard-Zahnrad, Blizzard-Löschatlas mit Fallback, graue Symbole mit blauer/roter Hover-Farbe, Tooltip) | – | – |
 | `Core/ScreenGlow.lua` | Leuchten am Bildschirmrand | screenGlow, screenGlowSkipInstances, screenGlowSpec | – |
 | `Media/Analog/dial_dots_small.tga` | Grafik | – | – |
 | `Media/Analog/dial_ticks.tga` | Grafik | – | – |
@@ -56,12 +58,12 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Modules/Clock/BlizzardClock.lua` | Original-Uhr ausblenden, Stoppuhr, Menü Original-Uhr | – | – |
 | `Modules/Clock/Clock.lua` | Minimap-Uhr, Klick-Aktionen | clockStyle, minimap, minimapPositions, use24Hour, useLocalTime | clockSize, freeClock |
 | `Modules/Clock/Clock.xml` | Ladeliste | – | – |
-| `Modules/Clock/Glow.lua` | Leuchteffekt an der Uhr | – | – |
+| `Modules/Clock/Glow.lua` | Leuchteffekt an der Uhr, Überdeckungserkennung mit gecachter Kinderliste | – | – |
 | `Modules/Clock/Locales/deDE.lua` | Texte deDE | – | – |
 | `Modules/Clock/Locales/enUS.lua` | Texte enUS | – | – |
 | `Modules/Clock/Locales/frFR.lua` | Texte frFR | – | – |
 | `Modules/Clock/Options.lua` | Optionen Tab Uhr | minimap | clockStyle, hideBlizzardClock, use24Hour, useLocalTime |
-| `Modules/Clock/OptionsLogo.lua` | Optionsfenster: Logo, Tabs, Button Alarme entschärfen, Größe fix | – | – |
+| `Modules/Clock/OptionsLogo.lua` | Optionsfenster im Blizzard-Uhrenfenster-Rahmen (Spielatlanten, rotes X, Logo mit laufender Uhr unter Allgemein), Tabs, Button Alarme entschärfen, Größe fix | – | – |
 | `Modules/Clock/Ring.lua` | Ring um die Uhr | – | – |
 | `Modules/Clock/SizeSlider.lua` | Größenregler | – | – |
 | `Modules/Clock/Tooltip.lua` | Tooltip der Uhr | activeTimer, alarms | – |
@@ -82,13 +84,19 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Modules/Timer/Options.lua` | Timerliste, Edit-Modus | activeTimer, presets | selectedPresetID |
 | `Modules/Timer/Timer.lua` | Timer-Logik | presets, selectedPresetID | activeTimer |
 | `Modules/Timer/Timer.xml` | Ladeliste | – | – |
-| `Modules/Wellness/Locales/deDE.lua` | Texte deDE | – | – |
-| `Modules/Wellness/Locales/enUS.lua` | Texte enUS | – | – |
-| `Modules/Wellness/Locales/frFR.lua` | Texte frFR | – | – |
-| `Modules/Wellness/Wellness.lua` | Wellness-Modul | – | – |
-| `Modules/Wellness/Wellness.xml` | Ladeliste | – | – |
+| `Modules/Health/Health.lua` | Health-Modulregistrierung, Hooks und eigener Optionsreiter | modules.health | – |
+| `Modules/Health/Health.xml` | Ladeliste mit Locales, Messages, Notice, Reminders, Health und Options | – | – |
+| `Modules/Health/Locales/deDE.lua` | Health-Texte und Bewegungssprüche deDE | – | – |
+| `Modules/Health/Locales/enUS.lua` | Health-Texte und Bewegungssprüche enUS | – | – |
+| `Modules/Health/Locales/frFR.lua` | Health-Texte und Bewegungssprüche frFR | – | – |
+| `Modules/Health/Messages.lua` | Titel/Text-Paare je Kategorie (Bewegung 10, Trinken 10, Augenpause 6 Übungen × 2 Texte) und Auswahl der eigenen Texte | health.<category>.customMessages | – |
+| `Modules/Health/Notice.lua` | Health-Bildschirmmeldung mittig mit fraktionsabhängigen TGA-Icons, globalen/individuellen Icon-Werten (Sichtbarkeit, Transparenz, vertikale Position) und Text in Effektfarbe; Unterdrückung in Kampf/Instanzen | – | – |
+| `Modules/Health/Reminders.lua` | Bewegungs-, Trink- und Augenpausentimer pro Session mit Prioritaet Trinken > Bewegung > Augenpause bei +/-5 Minuten; in Kampf/Instanz nur Chat, sonst je Konfiguration Anzeige/Glow/Ton | health.movement, health.notice, health.sound | – (Sitzung im RAM) |
+| `Modules/Health/Options.lua` | Schalter und Minuten-Slider aller drei Komponenten, Health-Mitteilungseinstellungen | health | health |
 
 ## Repo
+
+**Versionierung (ab `0.3.1-alpha.1`):** Für jeden neuen Repo-Build wird die Patchnummer `z` aus `x.y.z` um eins erhöht; `x` und `y` werden nur auf ausdrückliche Anweisung geändert. Die neue Patchversion beginnt mit `-alpha.1` (beispielsweise `0.3.1-alpha.1` → `0.3.2-alpha.1`). Vor jedem neuen Repository-ZIP müssen die vorgesehene Version und die ausdrückliche Baufreigabe beim Nutzer eingeholt werden.
 
 | Datei | Beschreibung |
 |---|---|
@@ -98,3 +106,15 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `.github/workflows/ci.yml` | CI: luacheck, check.py, Tests |
 | `.github/workflows/release.yml` | Release über BigWigs-Packager |
 | `.pkgmeta`, `.luacheckrc`, `.gitignore`, `.gitattributes` | Packager- und Lint-Konfiguration |
+
+| `Core/Playtime.lua` | Reload-resistente Session, letzte Sitzung, frische Server-/played-Werte bei Shift, bestätigte Charakter-Samples und separat gespeicherte Logout-Schätzstände | `db.global.playtime.characters[GUID]` | – |
+| `Media/Logos/cantplayforever_text.tga` | Überlagerter Originalschriftzug im Allgemein-Tab (256px transparenter TGA-Canvas, 255x131 Quellpixel) | – | – |
+
+- `tests/test_effects.py`: Sicherung der getrennten Effekte und Altprofil-Migration.
+
+- Effektoptionen: `Core/Options.lua` nutzt AceConfig-Farbwaehler, Dropdown und Slider; `Core/ScreenGlow.lua` liest/schreibt kompatible `effects.<modul>.spec`-Angaben, inkl. `periodSeconds`. `Core/Alert.lua` nutzt die Modulart/Periodendauer auch fuer den Uhr-Alarm-Glow.
+
+| `Media/Health/{movement,drink}_{alliance,horde}.tga`, `eye_break_all_factions.tga` | Transparente 256×256-TGA-Icons (Bewegung, Trinken, Augenpause) | – | – |
+
+| `Media/Health/faction_{alliance,horde}.tga` | Transparente 256×256-Testwappen für Health-Effektvorschau | – | – |
+| `docs/images/health/*.png` | PNG-Quellen der Health-Grafiken (nicht im Addon-Paket) | – | – |

@@ -4,8 +4,11 @@
     <Script file="Locales\deDE.lua"/>
     <Script file="Locales\frFR.lua"/>
     <Script file="Core.lua"/>
+    <Script file="OAPDebug.lua"/>
+    <Script file="Playtime.lua"/>
     <Script file="Alert.lua"/>
     <Script file="ScreenGlow.lua"/>
     <Script file="RowIcons.lua"/>
+    <Script file="AddonCompartment.lua"/>
     <Script file="Options.lua"/>
 </Ui>

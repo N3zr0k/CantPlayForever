@@ -18,20 +18,48 @@ local function IsMinimapSymbol(name, parent)
     return name:find('^LibDBIcon') ~= nil or name:find('^MiniMap') ~= nil or name:find('^Minimap') ~= nil
 end
 
+-- Kinderlisten der Minimap-Container werden nur neu gelesen, wenn sich deren
+-- Anzahl aendert (GetChildren legt bei jedem Aufruf eine neue Tabelle an).
+-- Der Symbol-Test haengt nur vom (festen) Frame-Namen ab und wird je Frame gemerkt.
+local childLists = {}
+local symbolCache = setmetatable({}, {__mode = 'k'})
+
+local function ChildrenOf(parent)
+    local count = parent.GetNumChildren and parent:GetNumChildren()
+    local entry = childLists[parent]
+    if not entry or entry.count ~= count then
+        entry = {count = count, parent:GetChildren()}
+        childLists[parent] = entry
+    end
+    return entry
+end
+
+local function CoverCandidate(self, child, parent, button)
+    if child == button or child == self.clockRing then return false end
+    local symbol = symbolCache[child]
+    if symbol == nil then
+        local name = child.GetName and child:GetName()
+        -- Kartenmarkierungen (z. B. GatherMate-Pins) und unbenannte Hilfsframes zaehlen nicht.
+        symbol = (name and IsMinimapSymbol(name, parent)) and true or false
+        symbolCache[child] = symbol
+    end
+    return symbol
+end
+
 function Clock:IsCoveringSomething()
     local button = self.iconButton
     if not (button and button:IsShown()) then return false end
     local l1, b1, r1, t1 = ScaledRect(button)
     if not l1 then return false end
     local limit = (r1 - l1) * 1.2
-    for _, parent in ipairs({ _G.Minimap, _G.MinimapCluster }) do
+    for index = 1, 2 do
+        local parent = index == 1 and _G.Minimap or _G.MinimapCluster
         if parent and parent.GetChildren then
-            for _, child in ipairs({ parent:GetChildren() }) do
+            local children = ChildrenOf(parent)
+            for i = 1, #children do
+                local child = children[i]
                 -- Nur Minimap-Symbole zählen: Knöpfe (LibDBIcon, Blizzard) und Frames der Minimap-Leiste.
-                -- Kartenmarkierungen (z. B. GatherMate-Pins) und unbenannte Hilfsframes nicht.
-                local name = child.GetName and child:GetName()
-                if child ~= button and child ~= self.clockRing and name and IsMinimapSymbol(name, parent)
-                    and child:IsShown()
+                if CoverCandidate(self, child, parent, button) and child:IsShown()
                     and child:GetAlpha() > 0.1 and child.GetRect then
                     local l2, b2, r2, t2 = ScaledRect(child)
                     -- Nur kleine, klickbare Elemente zählen (keine Karte, keine Zonenleiste).
@@ -237,7 +265,6 @@ function Clock:UpdateCoverGlow()
         self.coverName = nil
         self:ClearGlow('cover')
     end
-    self:RefreshGlow()
 end
 
 -- Öffentlich für andere Module (Bildschirmrand-Leuchten).

@@ -24,6 +24,7 @@ local function ModuleArgs()
             get = function() return Clock:IsModuleEnabled(id) end,
             set = function(_, value)
                 Clock.db.profile.modules[id] = value
+                Clock:OAPLog('info', 'Module {1}: {2}', id, value and 'enabled' or 'disabled')
                 Clock:NotifyOptions()
             end,
         }
@@ -75,11 +76,6 @@ function Clock:InitializeOptions()
                     },
                 },
                 modules = {type = 'group', name = L.MODULES_TAB, order = 2, args = ModuleArgs()},
-                debug = {
-                    type = 'toggle', name = L.DEBUG_MODE, desc = L.DEBUG_MODE_DESC, order = 100, width = 'full',
-                    get = function() return Clock.db.global.debug == true end,
-                    set = function(_, v) Clock.db.global.debug = v and true or false end,
-                },
             },
         }
         local optionsArgs = {
@@ -120,46 +116,80 @@ function Clock:InitializeOptions()
                 },
             },
             effects = {
-                type = 'group', name = L.EFFECTS_TAB, order = 3,
-                args = {
-                        screenGlow = {
-                            type = 'toggle', name = L.SCREEN_GLOW, order = 2.4, width = 'full',
-                            desc = L.SCREEN_GLOW_DESC,
-                            get = function() return Clock.db.profile.screenGlow == true end,
-                            set = function(_, v) Clock.db.profile.screenGlow = v end,
-                        },
-                        glowSpeed = {
-                            type = 'range', name = L.GLOW_SPEED, desc = L.GLOW_SPEED_DESC, order = 2.42,
-                            width = 'double', min = 0.3, max = 5, step = 0.1,
-                            get = function() return tonumber(Clock.db.profile.glowSpeed) or 1 end,
-                            set = function(_, v) Clock.db.profile.glowSpeed = v end,
-                        },
-                        screenGlowSkipInstances = {
-                            type = 'toggle', name = L.SCREEN_GLOW_NO_INSTANCE, order = 2.45, width = 'full',
-                            desc = L.SCREEN_GLOW_NO_INSTANCE_DESC,
-                            disabled = function() return not Clock.db.profile.screenGlow end,
-                            get = function() return Clock.db.profile.screenGlowSkipInstances ~= false end,
-                            set = function(_, v) Clock.db.profile.screenGlowSkipInstances = v end,
-                        },
-                        screenGlowSpec = {
-                            type = 'input', name = L.SCREEN_GLOW_SPEC, order = 2.5, width = 'double',
-                            desc = L.SCREEN_GLOW_SPEC_DESC,
-                            disabled = function() return not Clock.db.profile.screenGlow end,
-                            get = function() return Clock:GetScreenGlowSpec() end,
-                            set = function(_, v)
-                                if Clock:ParseGlowSpec(v) then
-                                    Clock.db.profile.screenGlowSpec = v
-                                else
-                                    Clock:Print(L.SCREEN_GLOW_SPEC_DESC)
-                                end
-                            end,
-                        },
-                        test = {
-                            type = 'execute', name = L.TEST_NOW, order = 3,
-                            desc = L.TEST_NOW_DESC,
-                            func = function() Clock:Alert(L.TEST_ALARM) end,
-                        },
-                },
+                type = 'group', name = L.EFFECTS_TAB, order = 3, childGroups = 'tab',
+                args = (function()
+                    local groups = {}
+                    local function MakeEffectGroup(source, title, order)
+                        local function Config() return Clock:GetEffectConfig(source) end
+                        groups[source] = {
+                            type = 'group', name = title, order = order,
+                            args = {
+                                -- Zeile 1: Modul-Effekt einschalten.
+                                enabled = {
+                                    type = 'toggle', name = L['EFFECT_GLOW_' .. source:upper()],
+                                    order = 1, width = 'full', desc = L.SCREEN_GLOW_DESC,
+                                    get = function() return Config().screenGlow == true end,
+                                    set = function(_, value) Config().screenGlow = value == true end,
+                                },
+                                -- Zeile 2: bei Health fest vorgegeben (auch Kampf ist gesperrt).
+                                skipInstances = {
+                                    type = 'toggle', name = L.SCREEN_GLOW_NO_INSTANCE,
+                                    order = 2, width = 'full',
+                                    desc = source == 'health' and L.HEALTH_RESTRICTED_NOTICE
+                                        or L.SCREEN_GLOW_NO_INSTANCE_DESC,
+                                    disabled = function()
+                                        return source == 'health' or not Config().screenGlow
+                                    end,
+                                    get = function()
+                                        if source == 'health' then return true end
+                                        return Config().skipInstances ~= false
+                                    end,
+                                    set = function(_, value)
+                                        if source ~= 'health' then Config().skipInstances = value == true end
+                                    end,
+                                },
+                                -- Zeile 3: gerahmte Gruppe "Darstellung"; darunter vier Zeilen.
+                                appearance = {
+                                    type = 'group', inline = true, name = L.EFFECT_APPEARANCE,
+                                    order = 3,
+                                    args = (function()
+                                        -- Die Health-Darstellung darf auch ohne aktives
+                                        -- Bildschirmrand-Leuchten vorbereitet werden.
+                                        local controls = ns.EffectAppearanceArgs(source, nil,
+                                            function()
+                                                return source ~= 'health' and not Config().screenGlow
+                                            end)
+                                        if source == 'health' then
+                                            -- Health hat keine globale Farbe: jede Kategorie
+                                            -- verwendet ihre eigene Fraktions-/Standardfarbe.
+                                            controls.color = nil
+                                            for key, option in pairs(ns.HealthIconAppearanceArgs(nil)) do
+                                                controls[key] = option
+                                            end
+                                        end
+                                        return controls
+                                    end)(),
+                                },
+                                -- Zeile 8: nur Bildschirmrand-Effekt vorschauen, ohne Alarmton.
+                                test = {
+                                    type = 'execute', name = L.EFFECT_TEST_NOW, order = 4,
+                                    disabled = function() return not Config().screenGlow end,
+                                    func = function()
+                                        if source == 'health' then
+                                            Clock:PreviewHealthEffect()
+                                        else
+                                            Clock:PreviewScreenGlow(source)
+                                        end
+                                    end,
+                                },
+                            },
+                        }
+                    end
+                    MakeEffectGroup('timer', L.EFFECT_SOURCE_TIMER, 1)
+                    MakeEffectGroup('alarms', L.EFFECT_SOURCE_ALARMS, 2)
+                    MakeEffectGroup('health', L.EFFECT_SOURCE_HEALTH, 3)
+                    return groups
+                end)(),
             },
         }
         args.general.args.confirmDelete = {
@@ -174,6 +204,92 @@ function Clock:InitializeOptions()
         if clockGroup then
             clockGroup.order = 1
             optionsArgs.clock = clockGroup
+        end
+        -- Vollständiger Top-Level-Reiter nur wenn OAP Debug tatsächlich geladen ist.
+        -- Bei fehlendem OAP Debug existiert kein Debug-Reiter und kein Debug-Schalter.
+        if Clock:IsOAPDebugAvailable() then
+            args.oapdebug = {
+                type = 'group', name = L.OAP_TAB, order = 95,
+                childGroups = 'tab',
+                args = {
+                    logging = {
+                        type = 'group', name = L.OAP_LOGGING_TAB, order = 1,
+                        args = {
+                            level = {
+                                type = 'select', name = L.OAP_LEVEL,
+                                desc = L.OAP_LEVEL_DESC, order = 1, width = 'full',
+                                values = {
+                                    errors = L.OAP_ERRORS,
+                                    normal = L.OAP_NORMAL,
+                                    metrics = L.OAP_METRICS,
+                                    detailed = L.OAP_DETAILED,
+                                },
+                                get = function() return Clock.db.global.oapLevel end,
+                                set = function(_, v)
+                                    Clock.db.global.oapLevel = v
+                                    Clock:OAPLog('info', 'OAP level set to {1}', v)
+                                end,
+                            },
+                            state = {
+                                type = 'description', name = L.OAP_INSTALLED, order = 2,
+                                width = 'full',
+                            },
+                        },
+                    },
+                    inspector = {
+                        type = 'group', name = L.OAP_INSPECT_TAB, order = 2,
+                        args = {
+                            help = {type = 'description', name = L.OAP_INSPECT_HELP, order = 1, width = 'full'},
+                            target = {type = 'select', name = L.OAP_TARGET, order = 2,
+                                values = {
+                                    core = L.OAP_TARGET_CORE, settings = L.OAP_TARGET_SETTINGS,
+                                    diagnostics = L.OAP_TARGET_DIAGNOSTICS, health = L.OAP_TARGET_HEALTH,
+                                    ui = L.OAP_TARGET_UI,
+                                },
+                                get = function() return Clock.oapInspectTarget or 'core' end,
+                                set = function(_, value) Clock.oapInspectTarget = value end,
+                            },
+                            inspect = {type = 'execute', name = L.OAP_INSPECT_BUTTON, order = 3,
+                                func = function() Clock:OAPInspectPreset(Clock.oapInspectTarget or 'core') end},
+                            watchTarget = {type = 'select', name = L.OAP_WATCH_TARGET, order = 4,
+                                values = {
+                                    core = L.OAP_TARGET_CORE, timer = L.OAP_TARGET_TIMER,
+                                    alarms = L.OAP_TARGET_ALARMS, health = L.OAP_TARGET_HEALTH,
+                                    settings = L.OAP_TARGET_SETTINGS,
+                                    diagnostics = L.OAP_TARGET_DIAGNOSTICS,
+                                },
+                                get = function() return Clock.oapWatchTarget or 'timer' end,
+                                set = function(_, value) Clock.oapWatchTarget = value end,
+                            },
+                            watch = {type = 'execute', name = L.OAP_WATCH_ADD, order = 5,
+                                func = function() Clock:OAPWatchPreset(Clock.oapWatchTarget or 'timer') end},
+                            unwatch = {type = 'execute', name = L.OAP_WATCH_REMOVE, order = 6,
+                                func = function() Clock:OAPUnwatchPreset(Clock.oapWatchTarget or 'timer') end},
+                            info = {type = 'description', name = L.OAP_INSPECT_COMMANDS, order = 7,
+                                width = 'full'},
+                        },
+                    },
+                    tools = {
+                        type = 'group', name = L.OAP_TOOLS_TAB, order = 3,
+                        args = {
+                            note = {type = 'description', name = L.OAP_TOOLS_HELP, order = 1,
+                                width = 'full'},
+                            log = {type = 'execute', name = L.OAP_OPEN_LOG, order = 2,
+                                func = function() Clock:OAPShow('log') end},
+                            metrics = {type = 'execute', name = L.OAP_OPEN_METRICS, order = 3,
+                                func = function() Clock:OAPShow('metrics') end},
+                            perf = {type = 'execute', name = L.OAP_OPEN_PERF, order = 4,
+                                func = function() Clock:OAPShow('perf') end},
+                            frames = {type = 'execute', name = L.OAP_OPEN_FRAMES, order = 5,
+                                func = function() Clock:OAPShow('frames') end},
+                            errors = {type = 'execute', name = L.OAP_OPEN_ERRORS, order = 6,
+                                func = function() Clock:OAPShow('errors') end},
+                            chat = {type = 'execute', name = L.OAP_OPEN_CHAT, order = 7,
+                                func = function() Clock:OAPShow('chat') end},
+                        },
+                    },
+                },
+            }
         end
         args.options = {
             type = 'group', name = L.OPTIONS_TAB, order = 1, childGroups = 'tab',

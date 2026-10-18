@@ -1,4 +1,18 @@
+## 0.3.11-alpha.1 – Alarmtypen und individuelle Darstellung (gebaut)
+
+- Standard für neue Profile: Health `5FFF4F, pulse, 1, 10`, Alarme `FF2619, pulse, 1, 30` und Timer `3399FF, pulse, 1, 30`.
+- Nur die Defaults und Fallbacks angepasst; individuell gespeicherte Effekte bleiben erhalten. Die TOC- und Release-Version wurde nach Baufreigabe auf 0.3.11-alpha.1 gesetzt.
+
+## 0.3.10-alpha.1 – Effektmenü und getrennte Tonwiederholungen (gebaut)
+
+- Uhr-Tooltip: Das gruen vorgefaerbte Blizzard-Info-Symbol wird als eigene Tooltip-Textur zuerst mit `SetDesaturated(true)` entsaettigt und danach mit `SetVertexColor(0.30, 0.70, 1.00)` blau eingefaerbt. Die Textur wird bei Shift und Mouseleave ausgeblendet. Bei unbenannten Tooltips wird ein blaues `(i)` als Text verwendet.
+
 # Can't play Forever 0.2.1 – WoW Forever
+
+> **Aktueller Versionsstand (17.10.2026):** `0.3.13-alpha.1`, inklusive serverseitiger `/played`-Abfrage und Login-/Logout-Sessionerfassung. Die Patchnummer `z` wird für jeden neuen Build erhöht; x/y nur auf ausdrückliche Anweisung. Details: [OAPDebug.md](OAPDebug.md).
+
+> **Historischer Stand (14.10.2026):** Das untenstehende Dokument enthält auch historische Konzepte und Dateinamen. Das früher geplante Modul **Wellness** heißt ab jetzt **Health**; `Modules/Health` ersetzt `Modules/Wellness`. Health ist weiterhin standardmäßig aus, aber nicht mehr gesperrt. Die Bewegungserinnerung ist der erste funktionsfähige Baustein. Die eigenen Schalter/Slider für Trinken, Augenpausen und Schlafenszeit sind vorbereitet. Details und weiterer Plan: [Health.md](Health.md). Die neue Version `0.3.0-alpha.1` wurde am 14.10.2026 vom Nutzer für den Repo-Build freigegeben.
+
 
 AddOn für eine verschiebbare Blizzard-Uhr an der Minimap mit Alarm- und Timer-Funktionen.
 Die Libraries Ace3, LibStub, CallbackHandler, LibDataBroker und LibDBIcon sind vollständig eingebettet.
@@ -40,8 +54,8 @@ Die Quelldatei `BetterClock.lua` sollte als Backup erhalten bleiben.
 |---|---|
 | Linksklick | Vorausgewählten Timer starten; erneuter Klick stoppt ihn |
 | Rechtsklick | Optionen (Allgemein) öffnen |
-| Shift + Linksklick | Alle ausgewählten Wecker aktivieren; weitere Klicks deaktivieren jeweils den nächsten Alarm |
-| Strg + Linksklick | Wie Linksklick (für ältere Bediengewohnheiten) |
+| Strg + Linksklick | Alle ausgewählten Wecker aktivieren; weitere Klicks deaktivieren jeweils den nächsten Alarm |
+| Shift + Mouseover | Aktuelle `/played`-Daten von WoW im Uhr-Tooltip anfordern und anzeigen |
 
 - Mehrere Wecker können für unterschiedliche Uhrzeiten scharfgestellt werden.
   Jeder löst zum nächsten entsprechenden Zeitpunkt genau einmal aus.
@@ -282,12 +296,12 @@ Ein Modul meldet sich mit `Clock:RegisterModule({id=..., OnInitialize, OnEnable,
 - Datumsalarme mit "Wiederholen" klingeln jährlich.
 - Alarm-Reiter aufgeräumt: nur Anlegen + gespeicherte Alarme (Trennlinien, Bearbeitungsmaske im Rahmen); Reihenfolge Shift+Links unter Optionen > Alarme.
 - Alarm anlegen aufklappbar (Button "Neuen Alarm anlegen"); Wochentage in einer eigenen Zeile.
-- Bearbeiten-Button als blaues Zahnrad (Media/Badges/edit_gear.tga).
-- Mülleimer-Symbol je Alarm (Media/Badges/delete_bin.tga) mit Löschabfrage; abschaltbar unter Optionen > Alarme.
+- Bearbeiten-Button verwendet jetzt die Blizzard-Textur `Interface\Buttons\UI-OptionsButton`; per Desaturierung + VertexColor grau, bei Hover blau.
+- Mülleimer-Symbol je Alarm mit Löschabfrage: nach Verfügbarkeit Blizzard-Atlas `common-icon-delete`, sonst `Media/Badges/delete_bin.tga`; bei Hover rot eingefärbt.
 - Zahnrad/Mülleimer enger beieinander, grau und bei MouseOver farbig.
 - Zeitplan neu: Wochentage immer sichtbar (Button "Alle Tage"), Datum mit Dropdowns und "Jeden Monat"/"Jedes Jahr"; Tag bei gesetzten Wochentagen ausgegraut. Alte Alarme werden migriert.
 - Tag-Auswahl richtet sich nach Monat/Jahr (Februar, Schaltjahr); zu kurze Monate: Alarm am letzten Tag des Monats.
-- Zeilen-Symbole: graue/farbige Bilder statt Einfärbung, Standard-Hervorhebung aus.
+- Zeilen-Symbole: Bearbeiten und Löschen werden jetzt mit `SetDesaturated(true)` + `SetVertexColor` grau und bei Hover blau/rot eingefärbt; andere Zeilen-Symbole behalten ihre bisherige Bildlogik. Standard-Hervorhebung aus.
 - Bearbeiten-Maske: Alle Tage (an/ab) vor den Tagen, Tag/Monat/Jahr mit Haken in einer Zeile, Alarmnachricht füllt die Zeile.
 - Shift+Linksklick schaltet nur Alarme ab, die dafür ausgewählt sind.
 - Optionsfenster nicht mehr in der Größe veränderbar (Anfasser unten rechts entfernt).
@@ -309,3 +323,262 @@ Ein Modul meldet sich mit `Clock:RegisterModule({id=..., OnInitialize, OnEnable,
 - Blizzard-Uhr an der Minimap wird standardmäßig ausgeblendet, solange die eigene Uhr aktiv ist (abschaltbar unter Optionen > Uhr).
 - Stoppuhr: Strg+Rechtsklick auf die Uhr öffnet/schließt die Blizzard-Stoppuhr (Stopwatch_Toggle).
 - Alt+Rechtsklick auf die Uhr öffnet das Menü der Original-Uhr (TimeManager_Toggle).
+
+- OAP Debug: Debug-Tab nur bei geladenem OAP; verifizierte OAP-1.1-API integriert (Log, Inspect, Chat, Count, Gauge, Time, Start/StopTimer, Watch/Unwatch, Show). Native Metrics-Tab-Messungen und Live-Watches; ohne OAP keine eigene Debug-Ausgabe.
+
+### OAP Debug 1.1 – Quellcodeprüfung (unreleased)
+- Nutzer stellte das vollständige OAP-Debug-1.1-ZIP bereit. API_VERSION=2 in `Core.lua` bestätigt; `HelpUsage.lua` dokumentiert die Stufen errors/normal/metrics/detailed.
+- Die früheren Metriken wurden auf native OAP-Counter/Gauges/Timer umgestellt; Inspector-Telemetrie bleibt ergänzend. Kein Debug-Tab, Debug-Output oder Debug-Telemetrie ohne geladenes OAP.
+- Debug-Reiter um Inspector/Watch-Aktionen und Navigationsknöpfe für OAP-Tabs erweitert.
+- `Clock:Print` bleibt Spieler-Chat-Ausgabe und wird ab Stufe Normal zusätzlich als Chat-Kopie an OAP gespiegelt.
+- Realer Ingame-Test ausstehend.
+
+## AddonCompartmentFrame (vorbereitet für 0.3.2-alpha.1)
+
+Eigener registrierter Compartment-Eintrag: Klick öffnet das allgemeine Optionsmenü, Mouseover zeigt die Bedienung mit vorhandenen Uhr-Texten. Registrierung nur bei vorhandenem Blizzard-API und einmal pro geladenem Addon. Keine Veränderung des Minimap-Buttons. Ingame-Verifikation steht noch aus. Keine Versionsänderung/kein Repo-ZIP ohne separate Freigabe.
+
+## 0.3.2-alpha.1 – Geplante Ingame-Prüfung
+
+- Allgemein zeigt über dem in allen Tabs identischen, mittigen Uhrkreis den
+  transparenten Schriftzug in ca. 50px Höhe; Tab-Abstände links/rechts prüfen,
+  insbesondere mit/ohne Health und OAP Debug.
+- Uhren-Tooltip: Aktuelle Session direkt unter Uhrzeit; Shift erweitert um
+  Char-/Stufen-/Account-Spielzeit und Trennstrich; Switch-Shift live testen.
+- Blizzard AddonCompartment: Eintrag, Klick öffnet Allgemein, Tooltip-Bedienung.
+- `/played` liefert asynchron Serverdaten; auf erstes Login, Level-Up und `/reload`
+  prüfen. Accountsumme umfasst nur bereits einmal angemeldete, erfasste Chars.
+
+## Regression-Untersuchung 0.3.2-alpha.1 – Optionskopf und Minimap-Kollision
+
+- Vergleich 0.3.1 vs. 0.3.2: `Modules/Clock/Glow.lua` und die ursprüngliche
+  Minimap-Positionierung waren unverändert. Die neue `/played`-Routine lief jedoch
+  ungeschützt vor `RunHook('OnTick')`; ein Fehler konnte damit den gesamten
+  Modul-Ticker dieses Sekundenintervalls blockieren.
+- `RegisterAddonCompartment()` wurde vor Anlage des Core-Tickers direkt aufgerufen.
+  Ein API-Fehler dort konnte `OnEnable` abbrechen und dadurch die periodischen
+  Kollisionstests ganz verhindern.
+- In dieser Reparatur alle neuen potenziell fehlerhaften Einstiegspunkte über
+  `GuardedTick` abgesichert. Ohne OAP Debug bleibt die Fehlerausgabe aus.
+- Das Design von `OptionsLogo.lua` aus 0.3.1 wird **unverändert** eingesetzt.
+  Dadurch sind die seit 0.3.2 gewünschten zusätzlichen Overlays und die
+  symmetrische Aufteilung vorübergehend zurückgenommen. Erst in WoW prüfen,
+  bevor das Design erneut schrittweise ergänzt wird.
+- Noch nicht abschließend im Spiel verifiziert: prüfen, ob die 64-px-Uhr beim
+  Verschieben über ein *sichtbares LibDBIcon*-Symbol erneut gelb leuchtet;
+  die kleine 32-px-Uhr wird in `UpdateCoverGlow` bewusst nicht geprüft.
+- Bei weiterem Ausfall in OAP Debug > Errors/Log nach neuen Einträgen suchen.
+
+## 0.3.3-alpha.1 – Repo-Build
+
+- Build auf Grundlage von `0.3.2-alpha.1` mit Regression-Hotfix.
+- Keine weiteren Änderungen an AceGUI oder dessen Tab-Geometrie; stabiles OptionsLogo von `0.3.1-alpha.1`.
+- `/played`, AddonCompartment und Options-Styling sind gegen Laufzeitfehler abgeschirmt, damit Clock-/Health-Ticker weiterlaufen können.
+- Die Minimap-Überdeckung wird direkt nach Drag-Ende erneut geprüft.
+- Die gewünschte separate Text-Einblendung ist aus Stabilitätsgründen noch nicht wiederhergestellt; Ingame-Prüfung weiterhin erforderlich.
+
+## Spielzeit / Shift-Tooltip – Arbeitsstand nach 0.3.3-alpha.1
+
+- Der bisherige Sessionbeginn in `InitializePlaytime` setzte sich bei jedem `/reload` zurück.
+  Jetzt überlebt der Login-Zeitstempel in den kontoübergreifenden `SavedVariables`;
+  `PLAYER_ENTERING_WORLD(isInitialLogin, isReloadingUi)` unterscheidet bei unterstützten
+  Clients den Reload vom echten Login. `PLAYER_LOGOUT` allein ist dafür nicht geeignet.
+- Die letzte abgeschlossene Session bleibt pro GUID erhalten. Auf einem neuen Login wird
+  die letzte Logout-Zeit bestätigt; ein Reload darf diesen Wert nicht ersetzen.
+- /played-Daten werden nur serverseitig übernommen (`TIME_PLAYED_MSG`) und zwischen
+  Samples anhand des aktuellen Login-/Samplezeitpunkts hochgerechnet; kein Doppeltzählen
+  nach Reload und keine Offlinezeit in der Accountsummierung.
+- Beim Öffnen mit Shift beziehungsweise beim Drücken/Loslassen von Shift während des
+  Mouseovers wird der Tooltip direkt aktualisiert; fehlende /played-Werte fordern
+  `RequestTimePlayed` höchstens einmal pro Minute an.
+- Lua-Simulation für Login, Reload, echten Logout, Shift, Serverantwort und 2 Charaktere
+  hinzugefügt; zusätzlich den echten Forever-Client mit `/reload` und `/played` prüfen.
+
+
+## 0.3.4-alpha.1 – Repo-Build
+
+- Shift-Mouseover fragt bei neuem Hover die Spielzeitdaten beim WoW-Server ab und zeigt bis zur Antwort einen Ladehinweis. Charakter- und Stufen-Spielzeit werden im Shift-Tooltip nur aus einer bestätigten `TIME_PLAYED_MSG`-Antwort angezeigt.
+- Die laufende Login-Session übersteht `/reload`; die vorherige Login-bis-Logout-Session bleibt separat pro Charakter erhalten.
+- Beim Logout werden bestätigte Serverwerte pro Charakter-GUID accountweit gesichert und separat gekennzeichnete Logout-Endstände für Offline-Charaktere berücksichtigt.
+- Es wurden keine weiteren Änderungen am AceGUI-Tablayout vorgenommen; Optionen-Logo bleibt auf dem restaurierten Stand von 0.3.1.
+- Versionsprozess: keine individuellen Git-Patches mehr erstellen. Änderungen im Repo vorbereiten; Repo-ZIP ausschließlich nach expliziter Freigabe.
+- Ingame-Tests für den asynchronen `/played`-Antwortweg und Reload-vs.-Login-Verhalten stehen noch aus.
+
+
+## 0.3.5-alpha.1 – Repo-Build: Spielzeitformat und Tooltip-Trennlinie
+
+- Die drei Shift-Zeilen (Charakter gesamt, aktuelle Stufe, Account gesamt) zeigen
+  bestätigte WoW-`/played`-Werte in ganzen, lokalisierten **Tagen, Stunden, Minuten**
+  (deDE/enUS/frFR); angefangene Minuten werden abgerundet, Singular/Plural stimmt.
+- Aktuelle und letzte Login-Session bleiben `hh:mm:ss` (Sekunden sichtbar),
+  Timer ebenfalls unverändert. Die Datenhaltung und `/played`-Abfrage bleiben gleich.
+- Änderungen sind im Arbeitsstand vorbereitet; TOC-Version bleibt bis zur
+  ausdrücklichen Baufreigabe auf 0.3.5-alpha.1.
+
+## 0.3.6-alpha.1 – Tooltip-Gestaltung und accountweite Charakterliste
+
+- Uhrzeit im Mouseover als große, helle Zahl mit goldener Beschriftung; eigener Abschnitt „Spielsession“ mit aktueller/letzter Session (`hh:mm:ss`).
+- Shift öffnet einen klar abgesetzten Bereich „Spielzeit aus WoW“. Nach Charakter/Level und Account gesamt werden alle gespeicherten Charaktere mit Klassenfarbe und serverseitig bestätigter Spielzeit in Tagen/Stunden/Minuten aufgelistet. Der native Divider mit 10 px Seitenabstand beendet diesen Datenbereich.
+- `Core/Playtime.lua` speichert den WoW-Klassentoken (`UnitClass` zweiter Rückgabewert) pro GUID; bei alten Datensätzen ohne Klassenzuordnung neutral bis zum nächsten Login.
+- Accountsumme und Einzelliste zeigen nur bestätigte `TIME_PLAYED_MSG`-Werte; die beim Logout separat gespeicherten Schätzwerte werden nicht als `/played`-Werte ausgegeben.
+- Ingame prüfen: Schrift-/Tabellenbreite bei mehreren Charakteren und langen Realm-Namen sowie korrekte Aktualisierung nach Serverantwort.
+
+### Leise WoW-Spielzeitabfrage für Shift-Tooltip (umgesetzt 0.3.6-alpha.1)
+- `RequestTimePlayed()` erzeugt `TIME_PLAYED_MSG`, das registrierte Blizzard-Chatfenster eigenständig als zwei Systemzeilen anzeigen; `CHAT_MSG_SYSTEM`-Chatfilter greifen dabei nicht.
+- Beim eigenen Request werden nur die vorher tatsächlich registrierten `TIME_PLAYED_MSG`-Listener der Chatfenster temporär ausgesetzt, nicht andere Events oder Nachrichten. `Clock` erhält die Antwort weiterhin und speichert echte Serverwerte.
+- Auf Event-Antwort wird die Registrierung zeitversetzt nach dem Event-Dispatch wiederhergestellt; ebenfalls sofort bei Request-Fehler oder spätestens nach 20 Sekunden Timeout. Manuelles `/played` außerhalb dieser sehr kurzen Zeitspanne funktioniert unverändert.
+- Einschränkung: Eine gleichzeitig mit unserer ausstehenden Anfrage durch ein anderes Addon oder den Spieler ausgelöste `/played`-Antwort teilt dasselbe Event und lässt sich nicht zuverlässig von unserer Antwort unterscheiden; dafür bietet das WoW-API keine Anfragekennung.
+
+### Vorbereitete Ergänzung nach 0.3.5 – Serverstand vor Logout (umgesetzt 0.3.6-alpha.1)
+- Die `/played`-Serverwerte werden während aktiver Sessions nach jeder Antwort frühestens nach 10 Minuten still erneut angefragt; die bekannten Charakterdaten werden bei `TIME_PLAYED_MSG` sofort gespeichert.
+- `PLAYER_LOGOUT` sichert ausdrücklich einen Snapshot des **letzten bestätigten** Serverwerts (Gesamt + Stufe) mit Antwort- und Logout-Zeitstempel je Charakter-GUID. Lokale Logout-Schätzungen bleiben separat und fließen nicht in die als `/played` gekennzeichneten Tooltipwerte ein.
+- Beim Logout kann nicht auf eine neue Serverantwort gewartet werden. Folglich ist der Snapshot maximal so aktuell wie der letzte bestätigte Request. `/reload` bleibt innerhalb derselben Session.
+- Lua-Simulation deckt periodischen Abruf, Serverantwort, finalen Logout-Snapshot und Stufen-Spielzeit ab.
+
+### Überarbeitung des Abfrageverhaltens (umgesetzt 0.3.6-alpha.1)
+- Echte Login-bis-Logout-Sessions bleiben auch bei `/reload` erhalten.
+- **30 Sekunden nach echtem Login** erste automatische stille `RequestTimePlayed()`-Abfrage,
+  anschließend **alle 10 Minuten**; nächster Zeitpunkt in `record.nextAutoPlayedAt`
+  gespeichert, damit ein `/reload` die Abfragezeit nicht zurücksetzt.
+- Reines Uhr-Mouseover fordert keine Spielzeit mehr an. **Shift drücken** bei geöffnetem
+  Uhr-Tooltip fordert einen neuen echten Serverwert; bei bereits gedrücktem Shift wird
+  beim Mouseover ebenfalls angefragt. Ein noch offener Hintergrund-Request wird mitbenutzt.
+- `TIME_PLAYED_MSG` wird grundsätzlich verarbeitet: auch manuelles `/played` im Chat
+  aktualisiert die accountweite GUID-Speicherung, ohne den manuellen Befehl umzuleiten.
+  Manuelles `/played` bleibt im Chat sichtbar; bei zeitgleichem stillem CPF-Request
+  sind die Antworten technisch nicht unterscheidbar.
+- Automatische und Shift-Anfragen unterdrücken ihre Blizzard-Chat-Ausgabe kurzzeitig
+  und stellen die Chat-Eventregistrierungen nach Antwort, Fehler oder Timeout wieder her.
+- Ingame verifizieren: 30-Sekunden-Start, wiederkehrende 10-Minuten-Anfrage,
+  Shift loslassen/erneut drücken, normales Mouseover, manuelles `/played`, `/reload`.
+
+## 0.3.7-alpha.1: Tooltip und Charakteridentität
+
+- Timer direkt unter der Uhrzeit; Shift-Überschrift nur „Spielzeit“.
+- Klasse und Fraktion werden beim Login GUID-basiert gespeichert; die Anzeige nutzt die Klassenfarbe und das eingebaute Allianz-/Horde-Symbol. Alte Datensätze werden beim nächsten Login des jeweiligen Charakters ergänzt.
+- Für WoW Forever den vollständigen Namen über `GetUnitName("player")` bevorzugen, da `UnitName`/`UnitFullName` je nach Clientversion nur den Vornamen liefern. Vollständige gespeicherte Namen bleiben gegen kürzere Antworten geschützt.
+- Kein Repo-Build ohne ausdrückliche Freigabe.
+
+## 0.3.7-alpha.1: Wecker-Tastenkürzel
+
+- **Strg + Linksklick** auf die Minimap-Uhr aktiviert bzw. deaktiviert die ausgewählten Wecker nacheinander; ersetzt **Shift + Linksklick**.
+- Einfacher Linksklick (auch mit Shift gehalten) startet/stoppt weiterhin den vorausgewählten Timer. Shift bei Mouseover bleibt für `/played` zuständig.
+- Tooltip, Blizzard-AddonCompartment, allgemeine Bedienungshilfe und Alarmeinstellungen in deDE/enUS/frFR entsprechend angepasst.
+- Strg + Rechtsklick (Stoppuhr), Alt + Rechtsklick (Original-Uhr) und Rechtsklick (Optionen) bleiben unverändert.
+
+## 0.3.7-alpha.1: Dynamischer Shift-Hinweis im Uhr-Tooltip
+
+- Direkt unter aktueller/letzter Session erscheint eine blaue Informationszeile mit Blizzards
+  kleinem `Interface\FriendsFrame\InformationIcon` (13 px), lokalisiert in deDE/enUS/frFR.
+- Eine Leerzeile trennt sie vom Sessionblock; unter der Hinweiszeile folgt eine weitere
+  Leerzeile vor den Bedienungshinweisen oder aktiven Alarmen.
+- Beim Halten von Shift ersetzt die Überschrift **Spielzeit** exakt die Hinweiszeile.
+  Die eigentlichen `/played`-Werte beginnen mit einer Leerzeile Abstand unter der Überschrift.
+- Der bereits vorhandene `MODIFIER_STATE_CHANGED`-Handler baut den Tooltip beim Drücken und
+  Loslassen neu auf. Keine zusätzliche WoW-Serveranfrage allein durch den Hinweis.
+- Ingame testen: Shift gedrückt beim Mouseover, Shift während Mouseover drücken/loslassen,
+  Timer/Wecker aktiv, mehrsprachige Tooltiptexte. Keine ZIP-Ausgabe ohne Freigabe.
+
+## 0.3.8-alpha.1 (gebaut)
+
+Health-Intervall basiert jetzt ausschließlich auf dem vorhandenen Session-Timer
+mit absoluten Login-Grenzen statt `GetTime()` nach Modulstart. Keine zusätzlichen
+Ticks. Für voneinander unabhängige Bildschirmrand-Effekte existieren künftig
+`profile.effects.timer`, `.alarms` und `.health`; beim ersten Laden des Profils
+werden bisherige Bildschirmrand-Einstellungen den Alarmeffekten zugewiesen.
+Spätere Auflösung von Alarm-Effekten: individueller Alarm > Alarmkategorie >
+Standard `effects.alarms` (heute nur Standard). WoW-Tooltip-Verdichtung
+und blaues Icon implementiert. Ingame-Test ausstehend.
+
+### 0.3.8-alpha.1 – Health-Sicherheitsmodus und Tooltip-Farben
+
+- Health-Bewegungserinnerungen bleiben auch im Kampf und in Instanzen pünktlich: die
+  konfigurierten Bildschirmmeldungen werden in diesen Situationen ausschließlich im
+  Chat ausgegeben. Keine Bildschirmanzeigen, Bildschirmrand-Glows oder Sounds.
+- Bereits laufende Health-Anzeigen werden beim Kampfbeginn bzw. Zonenwechsel
+  ausgeblendet (WoW-Events ohne neuen Ticker); zusätzlich schützt der Core-Tick.
+- Vorherige `health.deferInCombat`/`health.deferInInstances`-Profilwerte werden
+  nur zur Kompatibilität ignoriert, die nicht mehr passenden Optionsschalter entfernt.
+- Uhrzeit im Tooltip wieder in normal großer, weißer Schrift; die einzelnen
+  Charakter-Spielzeiten übernehmen jetzt dieselbe Klassenfarbe wie ihre Namen.
+- Noch kein neues Repository-ZIP; Änderungen erst im Spiel prüfen.
+
+## 0.3.9-alpha.1 – Effekte per Farbwaehler/Dropdown/Slider
+
+Die rohe Glow-Spec-Eingabe wurde in allen drei Modultabs durch AceConfig `color`,
+`select` und `range` ersetzt (Sekunden 0,2–10, Prozent 0–100). Der echte
+Blizzard-Farbpicker ist ueber AceGUI eingebunden, eine dynamische HEX-/Farbfeld-
+Vorschau zeigt den eingestellten Wert. `ScreenGlow.lua` ist die zentrale
+Serialisierungsschicht; kompatible alte Glow-Specs und deren Formzusaetze bleiben
+erhalten. Modulgeschwindigkeiten duerfen sich nicht mehr gegenseitig ueberschreiben.
+Erstellt nach ausdruecklicher Build-Freigabe. Live-Test im Spiel steht aus.
+
+## Alarmdarstellung – Architektur
+
+Die zentrale Routine `ns.EffectAppearanceArgs` in `Core/ScreenGlow.lua` baut gemeinsame AceConfig-Controls sowohl für Modul-Effekte als auch alarmbezogene Überschreibungen. `alarm.effect` speichert `spec` und `periodSeconds`, `alarm.customEffect` aktiviert die Überschreibung; `alarm.alarmType` hat Werte `alarm|event|reminder`. Altbestände werden einmalig als `alarm` migriert. Die Runtime übergibt das Alarmobjekt an `Clock:Alert`, sodass keine globalen Einstellungen temporär überschrieben werden. Die globale `screenGlow`-Freigabe sowie `skipInstances` stehen weiterhin über der Effekt-Überschreibung.
+
+## 0.3.12-alpha.1 – Health-Untertabs und individuelles Erscheinungsbild (gebaut)
+
+- Health: eigene Untertabs für Bewegung, Trinken, Augenpausen, Schlafenszeit
+  sowie Allgemein. Pro Kategorie eine unabhängig speicherbare, optionale
+  Überschreibung des globalen Health-Effektstils (`customEffect` / `effect`).
+  Standardwerte werden beim ersten Aktivieren kopiert, beim Deaktivieren
+  bleiben individuelle Werte erhalten; im Spiel wirkt derzeit nur Bewegung,
+  weitere Kategorien haben noch keine aktive Reminder-Logik.
+- Globaler Health-Effekt-Schalter und Instanz-/Kampfsperre bleiben maßgeblich.
+  Die Anzeige des Formulars (AceConfig) wird erst nach dem Haken eingeblendet.
+- Alarmformular: Typfeld nur ein Drittel breit; „Alle Tage“ links vor sieben
+  Wochentagen; Tag, Monat und Jahr bilden eine Zeile, die Checkboxen
+  „jeden Monat/jedes Jahr“ folgen darunter.
+- Keine zusätzliche Timer-Schleife. Versionsnummer und Repository-ZIP
+  wurden nach ausdrücklicher Baufreigabe erstellt.
+
+## 0.3.13-alpha.1 – zentrierte Health-Nachrichten mit Kategorie-Icon (gebaut)
+
+- Gemeinsame Anzeige von `Reminders.lua` nach `Modules/Health/Notice.lua` ausgelagert, via `Health.xml` vor den Erinnerungen geladen.
+- Frame exakt `UIParent CENTER (0, 0)` statt `CENTER (0, -115)`. WoW-Icon (144×144 px, 35 % Alpha) liegt unter dem mittig zentrierten, schattierten Text (`ARTWORK` vs. `OVERLAY`), TexCoord-Schnitt blendet Inventar-Icon-Ränder aus.
+- Vorläufige Icons pro Health-Kategorie: Bewegung `Ability_Rogue_Sprint`, Trinken `INV_Drink_07`, Augenpausen `Ability_EyeOfTheOwl`, Schlafenszeit `Spell_Nature_Sleep`. Auswechselbar in einer zentralen Zuordnung, ohne weitere Medien-Dateien.
+- Kein zusätzlicher Timer/Ticker, keine Profiländerung; vorhandene 9-Sekunden-Anzeige und Chat-only-Beschränkung in Kampf/Instanzen bleiben unverändert.
+
+## 0.3.14-alpha.1
+Health: Trinken/Augenpausen aktiviert, Schlafenszeit aus Optionen entfernt, fraktionsabhängige Icon-TGAs und feste Kategorie-Standardfarben bzw. individuelle Effektfarben, Icon-Ein/Aus + Transparenz, schwarzer Textumriss. Kein zusätzlicher Ticker.
+
+## Vorgemerkt fuer 0.3.15-alpha.1 – Health-Kollisionsregel (noch kein Build)
+
+Health-Planung: Priorität **Trinken > Bewegung > Augenpause**. Ein niedrigerer Termin im ±5-Minuten-Bereich um den nächsthöheren aktiven Termin wird ausgelassen (einschließlich der Grenze), noch bevor Nachricht/Ton/Glow ausgegeben werden. Dafür wird der geplante Sessionzeitpunkt aller eingeschalteten Kategorien geprüft, auch wenn der höherwertige Termin erst bevorsteht. Gleichzeitige Nachhol-Fälligkeiten nach einem verzögerten Core-Tick werden gemeinsam ausgewertet. `suppressed` und `lastSuppressedAt` werden nur im RAM geführt und unterdrückte Kategorien erhalten einen `health.<category>.suppressed`-OAP-Zähler. Keine zusätzlichen Timer oder SavedVariables. Lua-Runtime-Grenztests decken 4/5/6 Minuten, gleichzeitige Fälligkeit, deaktivierte Kategorien und Combat-Chat ab.
+
+## Vorbereitung 0.3.16-alpha.1 – Icon-Darstellung zentral/individuell
+
+Globaler Icon-Schalter, Transparenz und vertikale Y-Position gehören unter Optionen → Effekte → Health → Darstellung. In den einzelnen Kategorien erscheinen sie zusammen mit den Effektreglern nur bei aktivierter „Eigene Effektdarstellung“. Gespeichert unter `effects.health.icon*` bzw. `health.<category>.effect.icon*`; alte `health.<category>.icon*`-Werte werden für individuelle Einstellungen übernommen.
+
+## 0.3.17-alpha.1 – Health-Vorschau (gebaut)
+
+- Globale Health-Testfunktion zeigt einen neutralen Health-Beispieltext und das fraktionsabhängige Blizzard-Wappen in der eingestellten Farbe, Icon-Transparenz und Position.
+- Eigene Health-Darstellung testet den echten Kategorietext, das passende Health-Icon sowie individuelle Effektparameter ohne Chat oder Ton. Die Vorschau läuft neun Sekunden; Kampf/Instanz verhindert die Darstellung.
+- Ingame-Test steht weiterhin aus.
+
+## 0.3.18-alpha.1 – eigene Fraktionswappen für Health-Tests (gebaut)
+
+- Die allgemeine Health-Effektvorschau verwendet die neuen transparenten Allianz-/Hordewappen
+  aus `Media/Health/faction_alliance.tga` und `faction_horde.tga`, nicht mehr die Blizzard-PVP-Textur.
+- `GetHealthNoticeIcon(nil)` wählt das passende Motiv über `UnitFactionGroup('player')`.
+  Bewegung, Trinken und Augenpausen behalten ihre Kategorie-Icons und die bisherigen
+  individuellen Effekte sowie Y-Position/Deckkraft.
+- 256×256 RGBA-TGAs und PNG-Dateien sind im vollständigen Repository enthalten.
+
+## 0.3.19-alpha.1 – feste Health-Kategoriefarben (gebaut)
+
+- Der globale Farbpicker unter Optionen → Effekte → Health → Darstellung ist entfernt.
+- Bewegung und Trinken verwenden weiterhin Allianz-/Horde-spezifische Farbwerte, Augenpause Weiß.
+- Alte globale Health-Farben werden ignoriert. Bestehende individuelle Kategorie-Farben bleiben erhalten.
+- Andere globale Gesundheits-Effekteinstellungen und die allgemeine neutrale Health-Testfarbe bleiben erhalten.
+
+## 0.3.20-alpha.1 – Eigene Health-Texte und einheitliche Listen-Icons (gebaut)
+
+- Unter Health → Bewegung/Trinken/Augenpausen koennen beliebig viele eigene Nachrichten gespeichert, einzeln aktiviert, bearbeitet und geloescht werden. Optional 50/50-Mischung mit Standardtexten.
+- In Health, Alarme und Timer wurden die Bedienelemente auf gemeinsam wiederverwendete Blizzard-Icon-Texturen umgestellt: Gear (blauer Hover) und Loeschen (roter Hover), mit Graustufen-Einfaerbung und AceGUI-Recycling-Schutz.
+- Auf Wunsch des Nutzers wurde das komplette Repo erst nach Freigabe als ZIP erstellt; Ingame-Test steht noch aus.
+
+## 0.3.21-alpha.1 – Überarbeitete Health-Textverwaltung (gebaut)
+- Pro Kategorie kompakte Zeilen mit Aktivierungs-Haken, Blizzard-Zahnrad, Papierkorb und Text wie in der Alarmübersicht. Trennüberschrift „Gespeicherte Texte“ trennt Anlegen von der Liste.
+- Multiline-Eingabe besitzt keinen eingebauten AceGUI-Annehmen-Knopf. Eingaben bleiben reine Entwürfe und werden erst durch „Speichern“ übernommen; „Abbrechen“ verwirft sie.
+- Die gespeicherten Texte und ihre Aktivierungszustände bleiben nach /reload erhalten.

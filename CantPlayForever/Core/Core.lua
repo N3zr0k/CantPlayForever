@@ -47,7 +47,7 @@ ns.Clock = Clock
 ns.Broker, ns.DBIcon = Broker, DBIcon
 
 -- Alle Geometriewerte liegen in einer veränderbaren Tabelle (Standardwerte unten); das
--- Tuning-Fenster (Frame_Debugger: /cpftune) verstellt sie live.
+-- Werte können über einen externen Debug-Inspector wie OAP Debug betrachtet werden.
 local TUNE_DEFAULTS = {
     RING_X0 = 3, RING_Y0 = 6, RING_SIZE = 67,   -- Ausschnitt im Atlas (Atlas-Pixel)
     RING_MASK = 60.3, RING_MASK_H = 60.8,       -- Durchmesser der Kreismaske des Rings (B/H)
@@ -76,6 +76,12 @@ local TUNE_DEFAULTS = {
     ALARM_ICON_R = 1, ALARM_ICON_G = 1, ALARM_ICON_B = 1, ALARM_ICON_DESAT = 1, -- Alarm-Symbol: Farbe
     LOGO_X = 0, LOGO_Y = 25, -- Optionen-Logo: Lage relativ zur Oberkante des Fensters
     DIAMOND_X = 28.5, DIAMOND_Y = 0, DIAMOND_SIZE = 34, DIAMOND_R = 1.1, DIAMOND_G = 1.1, DIAMOND_B = 0.95, DIAMOND_DESAT = 1, -- Optionen-Logo: Rauten (Mitte relativ zum Logo, Größe, Farbe)
+    -- Optionsfenster im Blizzard-Uhrenrahmen (Lage relativ zu Rahmenecke bzw. Fensterrand)
+    OPT_CLOCK_DX = -11, OPT_CLOCK_DY = 11, OPT_CLOCK_SIZE = 52.5, -- Uhrenkreis in der Ecke: Versatz zur Eckenmitte, Durchmesser
+    OPT_TIME_SIZE = 18, OPT_TIME_DX = 0, OPT_TIME_DY = 0,       -- Uhrzeit im Kreis
+    OPT_CLOSE_X = 1.5, OPT_CLOSE_Y = 3.5, OPT_CLOSE_SIZE = 28.5,     -- rotes X (Versatz zur Fensterecke oben rechts)
+    OPT_TITLE_X = 63, OPT_TITLE_Y = -33, OPT_TAGLINE_DY = -2,    -- Name und Untertitel (links oben)
+    OPT_CONTENT_TOP = 60,                                       -- Beginn des Inhalts (Abstand zur Oberkante)
     ALARM_SCALE = 1, TIMER_SCALE = 1,                              -- Einzelgrößen (Faktor)
     ALARM_X = -24, ALARM_Y = 25, TIMER_X = -30.5, TIMER_Y = 12, -- Statussymbole (Mitte relativ zum Button)
 }
@@ -99,7 +105,7 @@ Clock.aceConfig = AceConfig
 Clock.aceDialog = AceDialog
 
 local DEFAULTS = {
-    global = { scope = 'account', debug = false }, -- debug: Debug-Meldungen im Chat (Allgemein)
+    global = { scope = 'account', oapLevel = 'metrics', playtime = {characters = {}} }, -- technisches Logging nur über optionales OAP Debug
     profile = {
         minimap = { hide = false, minimapPos = 90 },
         useLocalTime = true,
@@ -114,9 +120,19 @@ local DEFAULTS = {
         screenGlow = false,
         screenGlowSkipInstances = true,
         screenGlowSpec = 'FF2619, pulse, 1, 30',
+        -- Pro Modul getrennte visuelle Effekte; kuenftig pro Alarm ueberschreibbar.
+        effects = {
+            timer = {screenGlow = false, glowSpeed = 1, skipInstances = true,
+                     spec = '3399FF, pulse, 1, 30'},
+            alarms = {screenGlow = false, glowSpeed = 1, skipInstances = true,
+                      spec = 'FF2619, pulse, 1, 30'},
+            health = {screenGlow = false, glowSpeed = 1, skipInstances = true,
+                      spec = '5FFF4F, pulse, 1, 10',
+                      iconEnabled = true, iconTransparency = 65, iconOffsetY = 65},
+        },
         alarmSound = 'alarm2',
         alarmRepeats = 2,
-        alarmDisarmOrder = 'farthest', -- Shift+Linksklick: 'farthest' = entferntester zuerst, 'nearest' = nächster zuerst
+        alarmDisarmOrder = 'farthest', -- Strg+Linksklick: 'farthest' = entferntester zuerst, 'nearest' = nächster zuerst
         alarms = {},
         -- Keine vorbelegten Listen als AceDB-Defaults: sonst können gelöschte
         -- Vorgaben nach /reload wieder aus den Defaults auftauchen.
@@ -125,7 +141,18 @@ local DEFAULTS = {
         nextPresetID = 4,
         activeTimer = nil,
         selectedPresetID = 1,
-        modules = { clock = true, timer = true, alarms = true, wellness = false, stats = false, events = false },
+        modules = { clock = true, timer = true, alarms = true, health = false, stats = false, events = false },
+        health = {
+            movement = { customEffect = false, enabled = true, interval = 45,
+                customMessagesEnabled = false, mixWithDefault = false },
+            drinking = { customEffect = false, enabled = true, interval = 30,
+                customMessagesEnabled = false, mixWithDefault = false },
+            eyes = { customEffect = false, enabled = true, interval = 20,
+                customMessagesEnabled = false, mixWithDefault = false },
+            notice = 'screen', -- screen | chat | both
+            sound = false,
+            -- Im Kampf und in Instanzen: automatisch nur Chat (keine optischen Effekte).
+        },
     },
 }
 
@@ -137,36 +164,41 @@ local DEFAULTS = {
 --          GetOptions() -> {key, name, order, args}
 Clock.MODULES = {}
 
--- Debug-Meldungen: nur bei eingeschaltetem Debug (Optionen > Allgemein), Standard aus.
-function Clock:Debug(...)
-    if not (self.db and self.db.global.debug) then return end
-    local ok, text = pcall(string.format, ...)
-    self:Print('|cff999999[Debug]|r ' .. (ok and text or tostring((...))))
-end
+-- Clock:Debug/Clock:OAPLog werden zentral in Core/OAPDebug.lua definiert.
+
+local moduleIndex = {}
 
 function Clock:RegisterModule(def)
     table.insert(self.MODULES, def)
+    if def.id then moduleIndex[def.id] = def end
     self:Debug('Module registered: %s', tostring(def.id))
+    self:OAPCounter('modules.registered')
     return def
 end
 
 function Clock:IsModuleEnabled(id)
-    for _, module in ipairs(self.MODULES) do
-        if module.id == id then
-            if module.locked then return true end
-            if module.available == false then return false end
-            local modules = self.db and self.db.profile.modules
-            return not (modules and modules[id] == false)
-        end
-    end
-    return false
+    local module = moduleIndex[id]
+    if not module then return false end
+    if module.locked then return true end
+    if module.available == false then return false end
+    local modules = self.db and self.db.profile.modules
+    return not (modules and modules[id] == false)
 end
 
 -- Ruft den Haken in allen aktiven Modulen auf (always = true: auch in ausgeschalteten).
 function Clock:RunHook(name, always, ...)
     for _, module in ipairs(self.MODULES) do
         local hook = module[name]
-        if hook and (always or self:IsModuleEnabled(module.id)) then hook(self, ...) end
+        if hook and (always or self:IsModuleEnabled(module.id)) then
+            if name == 'OnTick' then
+                -- A broken module must not prevent the other modules from ticking.
+                local key = module.tickKey
+                if not key then key = 'module.' .. module.id; module.tickKey = key end
+                self:GuardedTick(key, hook)
+            else
+                hook(self, ...)
+            end
+        end
     end
 end
 
@@ -204,6 +236,15 @@ local STARTER_PRESETS = {
 -- bleibt auch dann gespeichert, wenn alle Vorgaben gelöscht wurden.
 function Clock:MigrateProfile(isNewProfile)
     local p = self.db.profile
+    -- Alter Modulname Wellness wird bei vorhandenen Profilen einmalig übernommen.
+    -- AceDB-Defaults liefern health=false, ohne einen neuen Wert zu speichern.
+    if type(p.modules) ~= 'table' then p.modules = {} end
+    local savedModules = self.db.sv and self.db.sv.profiles
+        and self.db.sv.profiles[self.db:GetCurrentProfile()]
+        and self.db.sv.profiles[self.db:GetCurrentProfile()].modules
+    if type(savedModules) == 'table' and savedModules.wellness ~= nil and savedModules.health == nil then
+        p.modules.health = savedModules.wellness == true
+    end
     -- Altes stufenloses Größenfeld auf drei feste Stufen migrieren.
     -- Die alte Standardgröße 84 wird zu 64 (Mittel).
     local oldSize = tonumber(p.clockSize)
@@ -233,6 +274,15 @@ function Clock:MigrateProfile(isNewProfile)
     if p.clockSize == 32 or p.clockSize == 64 then
         p.minimap.minimapPos = p.minimapPositions[p.clockSize]
     end
+    -- Vorhandene allgemeine Effekte einmalig als Alarmeffekte uebernehmen.
+    if not p.effectsMigrated then
+        local alarmsEffect = p.effects.alarms
+        alarmsEffect.screenGlow = p.screenGlow == true
+        alarmsEffect.glowSpeed = tonumber(p.glowSpeed) or 1
+        alarmsEffect.skipInstances = p.screenGlowSkipInstances ~= false
+        alarmsEffect.spec = p.screenGlowSpec or 'FF2619, pulse, 1, 30'
+        p.effectsMigrated = true
+    end
     p.alarmRepeats = math.max(1, math.min(10, math.floor(tonumber(p.alarmRepeats) or 2)))
     if not ({alarm1=true, alarm2=true, alarm3=true, ready=true})[p.alarmSound] then
         p.alarmSound = 'alarm2'
@@ -252,6 +302,12 @@ function Clock:MigrateProfile(isNewProfile)
     local maxAlarmID = 0
     for _, alarm in ipairs(p.alarms) do
         ns.MigrateAlarm(alarm)
+        -- Alarm-Kategorie erstmals speichern; alte Alarme sind weiterhin Wecker.
+        if alarm.alarmType ~= 'alarm' and alarm.alarmType ~= 'event'
+            and alarm.alarmType ~= 'reminder' then
+            alarm.alarmType = 'alarm'
+        end
+        if type(alarm.effect) ~= 'table' then alarm.customEffect = false end
         if alarm.selected == nil then alarm.selected = alarm.enabled ~= false end
         if alarm.armed == nil then alarm.armed = false end
         maxAlarmID = math.max(maxAlarmID, tonumber(alarm.id) or 0)
@@ -287,13 +343,14 @@ end
 function Clock:SwitchProfile(scope)
     if scope ~= 'account' and scope ~= 'character' then return end
     self.db.global.scope = scope
-    self:Debug('Save scope: %s', scope)
+    self:OAPLog('info', 'Save scope: {1}', scope)
     local name = self:ProfileName()
     local isNew = not (self.db.sv and self.db.sv.profiles
         and self.db.sv.profiles[name] ~= nil)
     self.db:SetProfile(name)
     self:MigrateProfile(isNew)
     self:RunHook('OnRefresh', true)
+    self:OAPCounter('profiles.changed')
     self:NotifyOptions()
 end
 
@@ -317,7 +374,7 @@ function Clock:OpenSettings(page)
     else
         self.aceDialog:Open('CantPlayForever')
     end
-    if self.StyleOptionsFrame then self:StyleOptionsFrame() end
+    if self.StyleOptionsFrame then self:GuardedTick('options.style', self.StyleOptionsFrame) end
 end
 
 function Clock:OnInitialize()
@@ -342,9 +399,21 @@ function Clock:OnInitialize()
         for profileName in pairs(saved.profiles) do existing[profileName] = true end
     end
     self.db = AceDB:New('CantPlayForeverSettings', DEFAULTS, true)
+    -- Alten Chat-Debug-Schalter nur einmal übernehmen und danach entfernen.
+    -- Ein deaktivierter alter Schalter wird nicht automatisch zu OAP-Debug-Detail.
+    local storedGlobal = self.db.sv and self.db.sv.global
+    if type(storedGlobal) == 'table' then
+        if storedGlobal.oapLevel == nil and storedGlobal.debug == true then
+            self.db.global.oapLevel = 'detailed'
+        end
+        storedGlobal.debug = nil
+    end
+    self:RegisterOAPDebug()
     local name = self:ProfileName()
     self.db:SetProfile(name)
     self:MigrateProfile(not existing[name])
+    -- Spielzeit darf weder die Module noch das Optionsmenue am Start blockieren.
+    self:GuardedTick('playtime.initialize', self.InitializePlaytime)
 
     self:InitializeAlarmNotice()
     self:RegisterChatCommand('bc', 'SlashCommand')
@@ -356,13 +425,27 @@ function Clock:OnInitialize()
 end
 
 function Clock:OnEnable()
-    self:RunHook('OnEnable')
+    -- Optionale /played-Erfassung isolieren; Clock/Timer/Health muessen weiterlaufen.
+    self:GuardedTick('playtime.enable', self.EnablePlaytime)
+    self:GuardedTick('modules.enable', function(core) core:RunHook('OnEnable') end)
+    -- Je nach Forever-Client kann der Blizzard-Compartment-Aufruf scheitern.
+    -- Er darf die zentrale Tick-Registrierung niemals verhindern.
+    self:GuardedTick('compartment.register', self.RegisterAddonCompartment)
+    self:OAPLog('info', 'Addon enabled (profile: {1})', self:ProfileName())
     local function Update()
+        self:OAPStartTimer('core.tick')
         -- Alarmmeldung und Leuchten zuerst und einzeln abgesichert: ein Fehler in einem
         -- Modul-Tick darf das Zurücksetzen nach einem Alarm nicht verhindern.
-        pcall(self.UpdateAlarmNotice, self)
-        pcall(self.UpdateAlarmSoundSequence, self)
+        self:GuardedTick('notice', self.UpdateAlarmNotice)
+        self:GuardedTick('sound', self.UpdateAlarmSoundSequence)
+        -- Kein ungeschuetzter Aufruf VOR den eigentlichen Modul-Ticks.
+        self:GuardedTick('playtime', self.PlaytimeOnTick)
         self:RunHook('OnTick')
+        if self:IsOAPDebugAvailable() then
+            self:OAPCounter('core.ticks')
+            self:GuardedTick('telemetry.snapshot', self.OAPSnapshot)
+            self:OAPStopTimer('core.tick')
+        end
     end
     if _G.C_Timer and type(C_Timer.NewTicker) == 'function' then
         self.tick = C_Timer.NewTicker(1, Update)
@@ -378,11 +461,12 @@ function Clock:OnEnable()
         end)
     end
     local getMeta = _G.C_AddOns and _G.C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
-    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '0.2.6'
+    local version = getMeta and getMeta(ADDON_NAME, 'Version') or '?'
     self:Print(string.format(L.VERSION_LOADED, tostring(version)))
 end
 
 function Clock:OnDisable()
+    if self.SavePlaytimeEstimate then self:GuardedTick('playtime.save', self.SavePlaytimeEstimate) end
     if self.tick then self.tick:Cancel(); self.tick = nil end
     if self.tickFrame then self.tickFrame:SetScript('OnUpdate', nil) end
 end

@@ -20,7 +20,7 @@ local ConfirmDelete = function() return ns.ConfirmDelete() end
 
 local draftOpen = false -- Anlege-Maske aufgeklappt
 local draft = {alarmHour = 19, alarmMinute = 0, alarmName = '', days = {true, true, true, true, true, true, true},
-    everyMonth = true, everyYear = true, repeating = false}
+    everyMonth = true, everyYear = true, repeating = false, alarmType = 'alarm', customEffect = false}
 
 local DAY_ORDER = {2, 3, 4, 5, 6, 7, 1} -- Mo..So (WoW: 1 = Sonntag)
 
@@ -49,7 +49,7 @@ local function ScheduleArgs(target, firstOrder, onChange)
     local function Days() return ns.AlarmHasDays(target) end
     local args = {
         allDays = {
-            type = 'execute', name = L.ALL_DAYS, order = firstOrder, width = 0.75,
+            type = 'execute', name = L.ALL_DAYS, order = firstOrder + 0.1, width = 0.52,
             desc = L.ALL_DAYS_DESC,
             func = function() -- alle angehakt -> alle abhaken, sonst alle anhaken
                 local all = true
@@ -62,7 +62,7 @@ local function ScheduleArgs(target, firstOrder, onChange)
             end,
         },
         day = {
-            type = 'select', name = L.DAY, order = firstOrder + 0.5, width = 0.5,
+            type = 'select', name = L.DAY, order = firstOrder + 0.5, width = 0.85,
             values = function()
                 local values = {}
                 for n = 1, MaxDay() do values[n] = tostring(n) end
@@ -73,18 +73,18 @@ local function ScheduleArgs(target, firstOrder, onChange)
             set = function(_, value) target.day = value Changed() end,
         },
         month = {
-            type = 'select', name = L.MONTH, order = firstOrder + 0.6, width = 0.5,
+            type = 'select', name = L.MONTH, order = firstOrder + 0.6, width = 0.85,
             values = MONTH_VALUES, disabled = function() return target.everyMonth == true end,
             get = function() return target.month or select(2, Today()) end,
             set = function(_, value) target.month = value Changed() end,
         },
         everyMonth = {
-            type = 'toggle', name = L.EVERY_MONTH, order = firstOrder + 0.61, width = 0.65,
+            type = 'toggle', name = L.EVERY_MONTH, order = firstOrder + 0.71, width = 0.65,
             get = function() return target.everyMonth == true end,
             set = function(_, value) target.everyMonth = value Changed() end,
         },
         year = {
-            type = 'select', name = L.YEAR, order = firstOrder + 0.7, width = 0.5,
+            type = 'select', name = L.YEAR, order = firstOrder + 0.7, width = 0.85,
             values = function()
                 local values, current = {}, Today()
                 for y = current - 1, current + 10 do values[y] = tostring(y) end
@@ -96,7 +96,7 @@ local function ScheduleArgs(target, firstOrder, onChange)
             set = function(_, value) target.year = value Changed() end,
         },
         everyYear = {
-            type = 'toggle', name = L.EVERY_YEAR, order = firstOrder + 0.71, width = 0.6,
+            type = 'toggle', name = L.EVERY_YEAR, order = firstOrder + 0.72, width = 0.6,
             get = function() return target.everyYear == true end,
             set = function(_, value) target.everyYear = value Changed() end,
         },
@@ -109,12 +109,12 @@ local function ScheduleArgs(target, firstOrder, onChange)
             set = function(_, value) target.repeating = value Changed() end,
         },
     }
-    -- Leerraum füllt Zeile 2 bis zum Rand, damit die Datumszeile sicher darunter beginnt
-    args.rowFill = {type = 'description', name = ' ', order = firstOrder + 0.3, width = 0.85}
+    -- Alle Tage (0.52) gefolgt von sieben Tagesfeldern (je 0.35):
+    -- zusammen 2.97 von 3 AceGUI-Einheiten. Das Datum folgt in der naechsten Zeile.
     for n, wday in ipairs(DAY_ORDER) do
         args['day' .. wday] = {
             type = 'toggle', name = L['DAY_' .. wday], order = firstOrder + 0.2 + n * 0.01,
-            width = 0.27,
+            width = 0.35,
             get = function() return target.days and target.days[wday] == true end,
             set = function(_, value)
                 target.days = target.days or {}
@@ -124,6 +124,42 @@ local function ScheduleArgs(target, firstOrder, onChange)
         }
     end
     return args
+end
+
+-- Die Modulvorgabe bleibt unangetastet. Erst der Haken legt eine eigene
+-- Kopie der Darstellung für diesen Alarm an; Ausschalten bewahrt seine Werte.
+local function IndividualEffectArgs(target, firstOrder, onChange)
+    local function Changed()
+        if onChange then onChange() end
+    end
+    return {
+        customEffect = {
+            type = 'toggle', name = L.ALARM_CUSTOM_EFFECT,
+            desc = L.ALARM_CUSTOM_EFFECT_DESC, order = firstOrder, width = 'full',
+            get = function() return target.customEffect == true end,
+            set = function(_, enabled)
+                Clock:SetAlarmCustomEffect(target, enabled)
+                Changed()
+            end,
+        },
+        appearance = {
+            type = 'group', inline = true, name = L.EFFECT_APPEARANCE,
+            order = firstOrder + 0.1,
+            hidden = function() return target.customEffect ~= true end,
+            args = (function()
+                local controls = ns.EffectAppearanceArgs('alarms',
+                    function() return Clock:GetAlarmEffectOverride(target) end,
+                    function() return target.customEffect ~= true end)
+                controls.preview = {
+                    type = 'execute', name = L.EFFECT_TEST_NOW, order = 5,
+                    func = function()
+                        Clock:PreviewScreenGlow('alarms', Clock:GetAlarmEffectOverride(target))
+                    end,
+                }
+                return controls
+            end)(),
+        },
+    }
 end
 
 -- Kurztext des Zeitplans für die Zeile: täglich / Mo,Di / Datum, mit * für "jeden Monat/jedes Jahr".
@@ -167,6 +203,12 @@ local function AlarmArgs()
             get = function() return draft.alarmName end,
             set = function(_, value) draft.alarmName = value end,
         },
+        alarmType = {
+            type = 'select', name = L.ALARM_TYPE, desc = L.ALARM_TYPE_DESC,
+            values = ns.AlarmTypeValues, order = 4.1, width = 1,
+            get = function() return draft.alarmType or 'alarm' end,
+            set = function(_, value) draft.alarmType = value end,
+        },
         add = {
             type = 'execute', name = L.ADD_ALARM, order = 6,
             func = function()
@@ -186,9 +228,13 @@ local function AlarmArgs()
                     day = draft.day or select(4, Clock:GetToday()),
                     everyMonth = draft.everyMonth, everyYear = draft.everyYear,
                     repeating = draft.repeating,
+                    alarmType = draft.alarmType or 'alarm',
+                    customEffect = draft.customEffect == true,
+                    effect = draft.effect and CopyTable(draft.effect) or nil,
                 })
                 db.nextAlarmID = db.nextAlarmID + 1
                 draft.alarmName = ''
+                draft.customEffect, draft.effect = false, nil
                 draftOpen = false
                 Clock:NotifyOptions()
             end,
@@ -198,10 +244,11 @@ local function AlarmArgs()
         },
     }
     for key, option in pairs(ScheduleArgs(draft, 4.5)) do args['draft_' .. key] = option end
+    for key, option in pairs(IndividualEffectArgs(draft, 5.31)) do args['draft_' .. key] = option end
     -- Anlege-Maske: zugeklappt nur ein Button, aufgeklappt eine Box mit Rahmen
     local box = {}
     for key in pairs(args) do
-        if key == 'hour' or key == 'minute' or key == 'message' or key == 'add'
+        if key == 'hour' or key == 'minute' or key == 'message' or key == 'alarmType' or key == 'add'
             or key:find('^draft_') then
             box[key], args[key] = args[key], nil
         end
@@ -233,10 +280,14 @@ local function AlarmArgs()
         args[key .. '_summary'] = {
             type = 'description', order = base + 3, width = 2.5, fontSize = 'medium',
             name = function()
-                local label = current.name ~= '' and current.name or L.ALARM_GENERIC
+                local label = ns.AlarmDisplayName(current, L.ALARM_GENERIC, 15)
                 local text = string.format('%s - %02d:%02d - %s', label,
                     current.hour, current.minute, ScheduleText(current))
                 text = '  ' .. text -- kleiner Abstand zum Mülleimer
+                local effect = Clock:GetAlarmEffectOverride(current)
+                if effect then
+                    return '|cff' .. Clock:GetEffectColorHex('alarms', effect) .. text .. '|r'
+                end
                 return current.armed and '|cff55ff55' .. text .. '|r' or text
             end,
         }
@@ -260,7 +311,7 @@ local function AlarmArgs()
         -- Bearbeitungsmaske: eigener Rahmen (inline-Gruppe), nur bei aufgeklapptem Zahnrad
         local mask = {
             selected = {
-                type = 'toggle', name = L.SELECT_FOR_SHIFT, order = 1, width = 'full',
+                type = 'toggle', name = L.SELECT_FOR_CTRL, order = 1, width = 'full',
                 get = function() return current.selected == true end,
                 set = function(_, value)
                     current.selected = value
@@ -285,8 +336,17 @@ local function AlarmArgs()
                 get = function() return current.name end,
                 set = function(_, value) current.name = value Clock:NotifyOptions() end,
             },
+            alarmType = {
+                type = 'select', name = L.ALARM_TYPE, order = 4.1, width = 1,
+                desc = L.ALARM_TYPE_DESC, values = ns.AlarmTypeValues,
+                get = function() return current.alarmType or 'alarm' end,
+                set = function(_, value) current.alarmType = value Clock:NotifyOptions() end,
+            },
         }
         for k, option in pairs(ScheduleArgs(current, 5, function() Clock:NotifyOptions() end)) do
+            mask[k] = option
+        end
+        for k, option in pairs(IndividualEffectArgs(current, 5.82, function() Clock:NotifyOptions() end)) do
             mask[k] = option
         end
         args[key .. '_mask'] = {
@@ -302,9 +362,9 @@ function ns.AlarmOptions()
     return {type = 'group', name = L.ALARMS_TAB, order = 2, args = AlarmArgs()}
 end
 
--- Reihenfolge beim Abschalten per Shift+Linksklick: Reiter Optionen > Alarme.
+-- Reihenfolge beim Abschalten per Strg+Linksklick: Reiter Optionen > Alarme.
 -- Allgemein: eigener Kasten "Alarme" (inline, kein Reiter) mit Erklärtext und Reihenfolge beim
--- Abschalten per Shift+Linksklick.
+-- Abschalten per Strg+Linksklick.
 function ns.AlarmGeneralArgs()
     return {
         alarms = {

@@ -2,7 +2,7 @@
 
 [![latest](https://img.shields.io/github/v/release/N3zr0k/CantPlayForever?include_prereleases&sort=date&label=latest)](https://github.com/N3zr0k/CantPlayForever/releases) [![last push](https://img.shields.io/github/last-commit/N3zr0k/CantPlayForever/main?label=last%20push)](https://github.com/N3zr0k/CantPlayForever/commits/main) [![CI](https://img.shields.io/github/actions/workflow/status/N3zr0k/CantPlayForever/ci.yml?branch=main&label=CI)](https://github.com/N3zr0k/CantPlayForever/actions/workflows/ci.yml)
 
-Clock with multiple alarms and timers for World of Warcraft Forever (Interface 16001).
+Clock with multiple alarms and timers for World of Warcraft Forever (Interface 16001). Optional Health module for movement, hydration and eye-break reminders with faction-aware icons.
 
 Repository: <https://github.com/N3zr0k/CantPlayForever>
 
@@ -24,6 +24,7 @@ Ordner `CantPlayForever` nach `Interface/AddOns/` kopieren.
 ## Dokumentation
 
 * [docs/Funktionen.md](docs/Funktionen.md)
+* [docs/OAPDebug.md](docs/OAPDebug.md) – optionale externe Debug-Zentrale
 * [docs/Files.md](docs/Files.md)
 * [docs/CURSEFORGE.md](docs/CURSEFORGE.md)
 

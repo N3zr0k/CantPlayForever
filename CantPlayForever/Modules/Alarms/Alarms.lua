@@ -2,8 +2,35 @@ local ADDON_NAME, ns = ...
 if not ns.Clock then return end
 local Clock, L, Now = ns.Clock, ns.L, ns.Now
 
+-- Three built-in alarm categories. Texture paths are standard Blizzard game icons.
+local ALARM_TYPE_TEXTURES = {
+    alarm = 'Interface\\Icons\\INV_Misc_PocketWatch_01',
+    event = 'Interface\\Icons\\INV_Misc_Book_09',
+    reminder = 'Interface\\Icons\\INV_Misc_Note_01',
+}
+function ns.AlarmTypeValues()
+    return {
+        alarm = ns.AlarmTypeIcon('alarm', 16) .. ' ' .. L.ALARM_TYPE_ALARM,
+        event = ns.AlarmTypeIcon('event', 16) .. ' ' .. L.ALARM_TYPE_EVENT,
+        reminder = ns.AlarmTypeIcon('reminder', 16) .. ' ' .. L.ALARM_TYPE_REMINDER,
+    }
+end
+function ns.AlarmTypeIcon(alarm, size)
+    local kind = type(alarm) == 'table' and alarm.alarmType or alarm
+    local texture = ALARM_TYPE_TEXTURES[kind] or ALARM_TYPE_TEXTURES.alarm
+    size = tonumber(size) or 16
+    return string.format('|T%s:%d:%d:0:0|t', texture, size, size)
+end
+function ns.AlarmDisplayName(alarm, fallback, size)
+    local name = alarm and alarm.name and alarm.name ~= '' and alarm.name or fallback or L.ALARM_GENERIC
+    -- Guard tooltip/FontString markup: player-entered messages must not contain
+    -- embedded WoW texture or color escape sequences.
+    name = tostring(name):gsub('[\r\n\t|]', ' ')
+    return ns.AlarmTypeIcon(alarm, size) .. ' ' .. name
+end
+
 -- Each selected alarm is armed for its NEXT matching wall-clock minute via
--- Shift+LeftClick. Alarms are one-shot unless alarm.repeating or a recurring date is set and are checked in chronological order
+-- Ctrl+LeftClick. Alarms are one-shot unless alarm.repeating or a recurring date is set and are checked in chronological order
 -- by the ordinary ticker. They do not fire without explicit arming.
 -- Heutiges Datum in der Zeitbasis der Uhr (Realm- oder Ortszeit): Wochentag (1 = Sonntag), Jahr, Monat, Tag.
 function Clock:GetToday()
@@ -84,10 +111,11 @@ function Clock:CountArmedAlarms()
     return count
 end
 
--- Einzelnen Alarm aktivieren/deaktivieren (Optionen); wie Shift+Klick,
+-- Einzelnen Alarm aktivieren/deaktivieren (Optionen); wie Strg+Klick,
 -- aber nur für diesen einen Alarm.
 function Clock:SetAlarmArmed(alarm, armed)
     self:Debug('Alarm %s: %s', tostring(alarm.message or '?'), armed and 'armed' or 'off')
+    self:OAPCounter(armed and 'alarms.armed' or 'alarms.disarmed')
     if armed then
         alarm.armed = true
         alarm.armedAfterMinute = math.floor(Now() / 60)
@@ -109,6 +137,7 @@ function Clock:ArmSelectedAlarms()
             count = count + 1
         end
     end
+    if count > 0 then self:OAPCounter('alarms.armed', count) end
     if count == 0 then
         self:Print(L.NO_ALARMS)
     else
@@ -118,16 +147,16 @@ function Clock:ArmSelectedAlarms()
     return count
 end
 
--- Shift+click cancels one armed alarm. Default order (option alarmDisarmOrder = 'farthest'): the
+-- Ctrl+click cancels one armed alarm. Default order (option alarmDisarmOrder = 'farthest'): the
 -- alarm FARTHEST away first (alarms that only ring tomorrow go first), the one that can still
 -- ring soonest today last; 'nearest' reverses that. Repeat to cancel
--- the others. Once none remains, Shift+click arms selected ones.
+-- the others. Once none remains, Ctrl+click arms selected ones.
 function Clock:DisarmNextAlarm()
     local currentEpochMinute = math.floor(Now() / 60)
     local nearest, nearestDelta, nearestID = nil, nil, nil -- the alarm to cancel (order: option alarmDisarmOrder)
     local nearestFirst = self.db.profile.alarmDisarmOrder == 'nearest'
     for _, alarm in ipairs(self.db.profile.alarms) do
-        if alarm.armed and alarm.selected then -- nicht für Shift+Linksklick ausgewählte bleiben unberührt
+        if alarm.armed and alarm.selected then -- nicht für Strg+Linksklick ausgewählte bleiben unberührt
             local justArmed = (alarm.armedAfterMinute or -1) >= currentEpochMinute
             local delta = self:AlarmMinutesUntil(alarm, justArmed)
             local id = tonumber(alarm.id) or 0
@@ -140,6 +169,7 @@ function Clock:DisarmNextAlarm()
     end
     if not nearest then return false end
     nearest.armed = false
+    self:OAPCounter('alarms.disarmed')
     self:Print(string.format(L.ALARM_DISARMED, nearest.hour, nearest.minute,
         nearest.name and nearest.name ~= '' and nearest.name or L.ALARM_FALLBACK))
     self:NotifyOptions()
@@ -180,8 +210,11 @@ function Clock:CheckAlarms()
             -- Wiederholende Alarme (Tage/täglich/jährlich) bleiben aktiv; einmalige schalten ab.
             if not Repeats(alarm) then alarm.armed = false end
             alarm.lastTriggeredMinute = currentMinute
-            self:Alert(alarm.name and alarm.name ~= '' and alarm.name
-                or string.format('%s %02d:%02d', L.ALARM_GENERIC, hour, minute))
+            self:OAPCounter('alarms.triggered')
+            self:OAPLog('info', 'Alarm triggered: {1}', alarm.name or '')
+            local message = alarm.name and alarm.name ~= '' and alarm.name
+                or string.format('%s %02d:%02d', L.ALARM_GENERIC, hour, minute)
+            self:Alert(message, 'alarms', alarm)
             self:NotifyOptions()
             return
         end

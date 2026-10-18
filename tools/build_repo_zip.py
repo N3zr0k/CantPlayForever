@@ -5,7 +5,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SKIP = {'.git', '__pycache__'}
+SKIP = {'.git', '__pycache__', '.pytest_cache'}
 
 
 def main():

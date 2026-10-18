@@ -3,32 +3,54 @@ if not ns.Clock then return end
 local Clock, T, Now = ns.Clock, ns.T, ns.Now
 local Broker, DBIcon = ns.Broker, ns.DBIcon
 
+-- date('*t') legt bei jedem Aufruf eine Tabelle an; Uhr, Zeiger und Tooltip
+-- fragen mehrfach pro Sekunde ab. Daher einmal pro Sekunde zwischenspeichern.
+local localAt, localHour, localMin, localSec
+local function LocalClock()
+    local now = time()
+    if now ~= localAt then
+        local info = date('*t', now)
+        localAt, localHour, localMin, localSec = now, info.hour, info.min, info.sec
+    end
+    return localHour, localMin, localSec
+end
+
 function Clock:GetHourMinute()
     if self.db.profile.useLocalTime then
-        local info = date('*t')
-        return info.hour, info.min
+        local hour, minute = LocalClock()
+        return hour, minute
     end
     return GetGameTime()
 end
 
+-- Sekunde passend zur gewaehlten Zeitquelle (Lokal- oder Serverzeit).
+function Clock:GetSecond()
+    if self.db.profile.useLocalTime then
+        return select(3, LocalClock())
+    end
+    return Now() % 60
+end
+
+local labelHour, labelMinute, label24, labelText
 function Clock:FormatClock()
     local hour, minute = self:GetHourMinute()
-    if not self.db.profile.use24Hour then
-        local twelve = hour % 12
-        hour = twelve == 0 and 12 or twelve
+    local use24 = self.db.profile.use24Hour
+    if hour ~= labelHour or minute ~= labelMinute or use24 ~= label24 then
+        local shown = hour
+        if not use24 then
+            local twelve = hour % 12
+            shown = twelve == 0 and 12 or twelve
+        end
+        labelHour, labelMinute, label24 = hour, minute, use24
+        labelText = string.format('%02d:%02d', shown, minute)
     end
-    return string.format('%02d:%02d', hour, minute)
+    return labelText
 end
 
 -- Im Tooltip wird auch der laufende Sekundenzeiger angezeigt.
 function Clock:FormatTooltipTime()
     local hour, minute = self:GetHourMinute()
-    local second
-    if self.db.profile.useLocalTime then
-        second = date('*t').sec
-    else
-        second = Now() % 60
-    end
+    local second = self:GetSecond()
     if not self.db.profile.use24Hour then
         local twelve = hour % 12
         hour = twelve == 0 and 12 or twelve
@@ -133,6 +155,35 @@ function Clock:IsAnalogClock()
     return self:GetClockDiameter() == SMALL_DIAMETER or self.db.profile.clockStyle == 'analog'
 end
 
+-- Text und Layout nur bei Aenderung setzen: Sekunden-Ticks aendern meist weder
+-- Uhrzeit noch Countdown noch Groesse, ClearAllPoints/SetFont/GetStringWidth
+-- wuerden sonst jede Sekunde neu laufen.
+local function PlaceText(self, region, text, x, y, size, maxWidth)
+    if region.cpfText == text and region.cpfX == x and region.cpfY == y
+        and region.cpfSize == size and region.cpfMaxW == maxWidth then
+        if not region:IsShown() then region:Show() end
+        return
+    end
+    region.cpfText, region.cpfX, region.cpfY = text, x, y
+    region.cpfSize, region.cpfMaxW = size, maxWidth
+    region:SetText(text)
+    region:ClearAllPoints()
+    region:SetPoint('CENTER', self.iconButton, 'CENTER', x, y)
+    Clock.ResizeClockFont(region, 'GameFontHighlightLarge', size, maxWidth)
+    region:Show()
+end
+
+local function HideText(region)
+    region.cpfText = nil -- naechstes Anzeigen layoutet neu
+    region:Hide()
+end
+
+-- Erzwingt neues Layout, z. B. nach Groessen- oder Schriftwechsel.
+function Clock:InvalidateClockText()
+    if self.clockText then self.clockText.cpfText = nil end
+    if self.clockSeconds then self.clockSeconds.cpfText = nil end
+end
+
 function Clock:UpdateClock()
     local label = self:FormatClock()
     if self.dataObject then self.dataObject.text = label end
@@ -140,22 +191,18 @@ function Clock:UpdateClock()
     if not self.clockText then return end
 
     local diameter = self:GetClockDiameter()
+    local k = diameter / 64
     if self:IsAnalogClock() then
-        self.clockText:Hide()
+        HideText(self.clockText)
         -- Mittel/Groß: Timer-Zahl bleibt sichtbar, liegt aber hinter den Zeigern
         -- (Zeiger sind Linien in einem Kind-Frame über dem Button).
         local countdown = diameter >= CLOCK_TEXT_MIN and self:CountdownText() or nil
         if self.clockSeconds then
             if countdown then
-                local k = diameter / 64
-                self.clockSeconds:SetText(countdown)
-                self.clockSeconds:ClearAllPoints()
-                self.clockSeconds:SetPoint('CENTER', self.iconButton, 'CENTER', T.CD_X * k, T.CD_Y * k)
-                Clock.ResizeClockFont(self.clockSeconds, 'GameFontHighlightLarge',
+                PlaceText(self, self.clockSeconds, countdown, T.CD_X * k, T.CD_Y * k,
                     T.CD_SIZE * k, T.CD_MAXW * k)
-                self.clockSeconds:Show()
             else
-                self.clockSeconds:Hide()
+                HideText(self.clockSeconds)
             end
         end
         return
@@ -164,25 +211,15 @@ function Clock:UpdateClock()
     local small = diameter < CLOCK_TEXT_MIN
     -- Klein: nur die Uhrzeit, ohne Countdown-Zeile.
     local countdown = (not small) and self:CountdownText() or nil
-    local k = diameter / 64
-    self.clockText:SetText(label)
-    self.clockText:ClearAllPoints()
-    self.clockText:SetPoint('CENTER', self.iconButton, 'CENTER', T.TEXT_X * k,
-        (countdown and T.TEXT_Y_CD or T.TEXT_Y) * k)
-    Clock.ResizeClockFont(self.clockText, 'GameFontHighlightLarge',
+    PlaceText(self, self.clockText, label, T.TEXT_X * k,
+        (countdown and T.TEXT_Y_CD or T.TEXT_Y) * k,
         (countdown and T.TEXT_SIZE_CD or T.TEXT_SIZE) * k, small and 26 or T.TEXT_MAXW * k)
-    self.clockText:Show()
-
     if self.clockSeconds then
         if countdown then
-            self.clockSeconds:SetText(countdown)
-            self.clockSeconds:ClearAllPoints()
-            self.clockSeconds:SetPoint('CENTER', self.iconButton, 'CENTER', T.CD_X * k, T.CD_Y * k)
-            Clock.ResizeClockFont(self.clockSeconds, 'GameFontHighlightLarge',
+            PlaceText(self, self.clockSeconds, countdown, T.CD_X * k, T.CD_Y * k,
                 T.CD_SIZE * k, T.CD_MAXW * k)
-            self.clockSeconds:Show()
         else
-            self.clockSeconds:Hide()
+            HideText(self.clockSeconds)
         end
     end
 end
@@ -302,6 +339,8 @@ function Clock:SetupClockDragging()
         btn:UnlockHighlight()
         self.dragOffsetX, self.dragOffsetY = nil, nil
         self:UpdateClockPosition()
+        -- Kollision sofort nach Loslassen neu pruefen; keine Tick-Abhaengigkeit.
+        if self.UpdateCoverGlow then self:UpdateCoverGlow() end
     end)
     if not self.clockPositionEvents then
         local f = CreateFrame('Frame')
@@ -401,9 +440,11 @@ function Clock:RefreshDisplay()
             self.iconLibrary:Show('CantPlayForever')
         end
     end
+    self:InvalidateClockText()
     self:ApplyClockArt()
     self:SetupClockDragging()
     if self.ApplyBlizzardClock then self:ApplyBlizzardClock() end -- Blizzard-Uhr folgt dem Zustand unserer Uhr
+    if self.RefreshGlow then self:RefreshGlow() end
     self:UpdateClock()
 end
 
@@ -429,7 +470,9 @@ Clock:RegisterModule({
                         self:OpenSettings('general')
                     end
                 elseif button == 'LeftButton' then
-                    if IsShiftKeyDown and IsShiftKeyDown() then
+                    -- Strg + Linksklick schaltet die vorausgewählten Wecker.
+                    -- Shift dient ausschließlich der /played-Abfrage beim Mouseover.
+                    if IsControlKeyDown and IsControlKeyDown() then
                         self:ToggleSelectedAlarms()
                     else
                         self:ToggleSelectedTimer()
@@ -437,9 +480,16 @@ Clock:RegisterModule({
                 end
             end,
             OnTooltipShow = function(tooltip)
+                -- Normales Mouseover fragt nichts ab. Bei bereits gedrücktem Shift
+                -- wird /played über RequestPlayedOnHover -> RequestPlayedOnShift geholt.
+                if self.RequestPlayedOnHover then self:RequestPlayedOnHover() end
                 self:BuildHoverTooltip(tooltip)
             end,
             OnLeave = function()
+                if self.EndPlayedHover then self:EndPlayedHover() end
+                if self.hoverTooltip and self.hoverTooltip.cpfPlaytimeInfoIcon then
+                    self.hoverTooltip.cpfPlaytimeInfoIcon:Hide()
+                end
                 self.hoverTooltip = nil
                 self.hoverClockLine = nil
                 self.hoverTimerLine = nil

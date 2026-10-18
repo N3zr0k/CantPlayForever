@@ -16,7 +16,9 @@ function Clock:CheckTimer()
     -- Die letzten Sekunden zeigt UpdateTimerWarnGlow (blauer Ring); beim Ablauf folgt der Alarm.
     if Now() >= timer.expiresAt then
         self.db.profile.activeTimer = nil
-        self:Alert(timer.name or L.TIMER_FINISHED)
+        self:OAPCounter('timer.expired')
+        self:OAPLog('info', 'Timer expired: {1}', timer.name or '')
+        self:Alert(timer.name or L.TIMER_FINISHED, 'timer')
         self:NotifyOptions()
         self:UpdateClock()
     end
@@ -25,6 +27,8 @@ end
 function Clock:StartTimer(seconds, name, presetID)
     seconds = Between(seconds, 1, 7 * 24 * 3600)
     self:Debug('Timer started: %d s (%s)', seconds, tostring(name))
+    self:OAPCounter('timer.started')
+    self:OAPLog('info', 'Timer started: {1} seconds, {2}', seconds, name or '')
     self.db.profile.activeTimer = {
         expiresAt = Now() + seconds,
         name = name or L.TIMER_FINISHED,
@@ -49,6 +53,8 @@ end
 
 function Clock:StopTimer()
     self:Debug('Timer stopped')
+    self:OAPCounter('timer.stopped')
+    self:OAPLog('info', 'Timer stopped')
     self.db.profile.activeTimer = nil
     self:Print(L.TIMER_STOPPED)
     self:NotifyOptions()

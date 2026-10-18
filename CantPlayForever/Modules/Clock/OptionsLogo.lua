@@ -1,3 +1,4 @@
+-- Optionsfenster im Rahmen des Blizzard-Uhrenfensters (Metallrahmen, rotes X, Logo links oben).
 -- Rundes Logo im Optionsfenster: ersetzt das eckige Titelschild des AceGUI-Fensters. Je nach
 -- gewähltem Reiter zeigt es das Bild des Moduls (module.logo), sonst Globus mit Bronzering der
 -- Uhr. Das Fenster stammt aus einem Pool, deshalb wird beim Schließen alles zurückgesetzt,
@@ -80,6 +81,7 @@ local function BuildLogo(parent)
     Clock:LayoutRing(ring, 1, default, 'TOPLEFT',
         -T.RING_OFFSET + T.RING_X0, T.RING_OFFSET - T.RING_Y0)
     logo.default = default
+    logo.ring = ring
 
     -- Eckgrafik des Spiels (Raute), um 45° gedreht, Linien laufen schräg zum Kreis.
     -- Lage/Größe/Farbe: T.DIAMOND_* (im Probe-Tuning-Fenster einstellbar).
@@ -90,6 +92,8 @@ local function BuildLogo(parent)
         logo.diamonds[#logo.diamonds + 1] = diamond
     end
     Clock:ApplyDiamonds(logo)
+    -- Der Metallrahmen bringt seine eigene Ecke mit: keine zusaetzlichen Rauten.
+    for _, diamond in ipairs(logo.diamonds) do diamond:Hide() end
 
     -- Modulbild (fertig gerendertes rundes Logo mit eigenem Rand)
     local picture = logo:CreateTexture(nil, 'ARTWORK')
@@ -97,15 +101,26 @@ local function BuildLogo(parent)
     picture:SetPoint('CENTER', logo, 'CENTER', 0, 0)
     picture:Hide()
     logo.picture = picture
+    -- Laufende Uhrzeit, nur im Reiter Allgemein sichtbar (wie im Uhrenfenster von Blizzard).
+    local timeFrame = CreateFrame('Frame', nil, logo)
+    timeFrame:SetAllPoints(logo)
+    timeFrame:SetFrameLevel(logo:GetFrameLevel() + 10)
+    local time = timeFrame:CreateFontString(nil, 'OVERLAY')
+    time:SetFont(_G.STANDARD_TEXT_FONT or 'Fonts\\FRIZQT__.TTF', 16, 'OUTLINE')
+    time:SetPoint('CENTER', timeFrame, 'CENTER', 0, 0)
+    time:SetTextColor(1, 1, 1, 1)
+    time:Hide()
+    logo.time = time
     return logo
 end
 
 -- Hauptreiter (Schlüssel der Optionsgruppe) -> Bild. Unterreiter ändern das Bild nicht.
 local TAB_LOGOS = {
-    general = LOGO_PATH .. 'allgemein_logo',
+    -- general: kein Bild, sondern die laufende Uhr (Standardlogo mit Uhrzeit)
     options = LOGO_PATH .. 'optionen_logo',
     alarms = LOGO_PATH .. 'alarm_logo',
     timer = LOGO_PATH .. 'timer_logo',
+    health = LOGO_PATH .. 'pause_logo', -- Platzhalter bis zum eigenen Health-Icon
 }
 
 local function SelectedTab()
@@ -142,8 +157,32 @@ local function BuildDisarmButton(open)
     return button
 end
 
+local function UpdateLogoTime(logo)
+    local tab = SelectedTab()
+    -- Im Blizzard-Rahmen zeigt jeder Reiter den Uhrenkreis; ohne Rahmen nur Allgemein.
+    local show = logo.skinned or tab == 'general' or tab == nil
+    if show then
+        local text = Clock:FormatClock()
+        if logo.timeText ~= text then logo.timeText = text; logo.time:SetText(text) end
+    end
+    if logo.time:IsShown() ~= show then logo.time:SetShown(show) end
+end
+
 local function ApplyLogo(logo)
     local path = SelectedLogo()
+    UpdateLogoTime(logo)
+    if logo.skinned then
+        -- Im Blizzard-Rahmen sitzt in der Ecke nur die Uhrzeit auf dem Hintergrund der
+        -- Minimap-Uhr (Globus, ohne eigenen Ring: den liefert die Rahmenecke).
+        logo.picture:Hide()
+        logo.ring:Hide()
+        logo.default:Show()
+        logo.current, logo.currentSet = nil, false
+        return
+    end
+    if logo.ring and not logo.ring:IsShown() then
+        logo.ring:Show()
+    end
     if logo.current == path and logo.currentSet then return end
     logo.current, logo.currentSet = path, true
     if path then
@@ -178,6 +217,213 @@ local function SetPlate(widget, shown)
     end
 end
 
+-- Rahmen des Blizzard-Uhrenfensters (Metallrahmen mit Eckstuecken, Kopfleiste, rotes X).
+-- Alle Grafiken sind Spiel-Atlanten; fehlt einer, bleibt der Ace-Rahmen unveraendert.
+local FRAME_ATLASES = {
+    'UI-Frame-PortraitMetal-CornerTopLeft', 'UI-Frame-Metal-CornerTopRight',
+    'UI-Frame-Metal-CornerBottomLeft', 'UI-Frame-Metal-CornerBottomRight',
+    '_UI-Frame-Metal-EdgeTop', '_UI-Frame-Metal-EdgeBottom',
+    '!UI-Frame-Metal-EdgeLeft', '!UI-Frame-Metal-EdgeRight',
+}
+local BACKGROUND_TEXTURE = 374155 -- Hintergrund des Uhrenfensters
+local STREAKS_ATLAS = '_UI-Frame-TopTileStreaks'
+local CLOSE_ATLASES = {normal = 'RedButton-Exit', pushed = 'RedButton-exit-pressed',
+    disabled = 'RedButton-Exit-Disabled', highlight = 'RedButton-Highlight'}
+local HEADER_HEIGHT = 37
+
+local function AtlasesAvailable()
+    if not (C_Texture and C_Texture.GetAtlasInfo) then return false end
+    for _, atlas in ipairs(FRAME_ATLASES) do
+        if not C_Texture.GetAtlasInfo(atlas) then return false end
+    end
+    return true
+end
+
+local function BuildSkin(open)
+    local frame = open.frame
+    local skin = {}
+    local function Tex(layer, sublevel)
+        local tex = frame:CreateTexture(nil, layer, nil, sublevel)
+        skin[#skin + 1] = tex
+        return tex
+    end
+    local bg = Tex('BACKGROUND', -7)
+    bg:SetTexture(BACKGROUND_TEXTURE, 'REPEAT', 'REPEAT')
+    bg:SetHorizTile(true)
+    bg:SetVertTile(true)
+    bg:SetPoint('TOPLEFT', frame, 'TOPLEFT', 2, -2)
+    bg:SetPoint('BOTTOMRIGHT', frame, 'BOTTOMRIGHT', -2, -2) -- 4 px tiefer, bis unter den Rahmen
+    if C_Texture.GetAtlasInfo(STREAKS_ATLAS) then
+        local streaks = Tex('BACKGROUND', -6)
+        streaks:SetAtlas(STREAKS_ATLAS)
+        streaks:SetHorizTile(true)
+        streaks:SetPoint('TOPLEFT', frame, 'TOPLEFT', 6, -3)
+        streaks:SetPoint('TOPRIGHT', frame, 'TOPRIGHT', -2, -3)
+        streaks:SetHeight(HEADER_HEIGHT)
+    end
+    local function Corner(atlas, point, x, y)
+        local tex = Tex('OVERLAY', 2)
+        tex:SetAtlas(atlas, true)
+        tex:SetPoint(point, frame, point, x, y)
+        return tex
+    end
+    local tl = Corner(FRAME_ATLASES[1], 'TOPLEFT', -12, 16)
+    skin.corner = tl
+    local tr = Corner(FRAME_ATLASES[2], 'TOPRIGHT', 4, 16)
+    local bl = Corner(FRAME_ATLASES[3], 'BOTTOMLEFT', -12, -16)
+    local br = Corner(FRAME_ATLASES[4], 'BOTTOMRIGHT', 4, -16)
+    local function Edge(atlas, horizontal, a, aPoint, b, bPoint)
+        local tex = Tex('OVERLAY', 1)
+        tex:SetAtlas(atlas, true)
+        if horizontal then tex:SetHorizTile(true) else tex:SetVertTile(true) end
+        tex:SetPoint(aPoint[1], a, aPoint[2], 0, 0)
+        tex:SetPoint(bPoint[1], b, bPoint[2], 0, 0)
+        return tex
+    end
+    Edge(FRAME_ATLASES[5], true, tl, {'TOPLEFT', 'TOPRIGHT'}, tr, {'BOTTOMRIGHT', 'BOTTOMLEFT'})
+    Edge(FRAME_ATLASES[6], true, bl, {'TOPLEFT', 'TOPRIGHT'}, br, {'BOTTOMRIGHT', 'BOTTOMLEFT'})
+    Edge(FRAME_ATLASES[7], false, tl, {'TOPLEFT', 'BOTTOMLEFT'}, bl, {'BOTTOMRIGHT', 'TOPRIGHT'})
+    Edge(FRAME_ATLASES[8], false, tr, {'TOPLEFT', 'BOTTOMLEFT'}, br, {'BOTTOMRIGHT', 'TOPRIGHT'})
+
+    -- Rotes X oben rechts (ersetzt den Schliessen-Knopf unten).
+    local close = CreateFrame('Button', nil, frame)
+    close:SetSize(T.OPT_CLOSE_SIZE, T.OPT_CLOSE_SIZE)
+    close:SetPoint('TOPRIGHT', frame, 'TOPRIGHT', T.OPT_CLOSE_X, T.OPT_CLOSE_Y)
+    close:SetFrameLevel(frame:GetFrameLevel() + 30)
+    close:SetNormalAtlas(CLOSE_ATLASES.normal)
+    close:SetPushedAtlas(CLOSE_ATLASES.pushed)
+    close:SetDisabledAtlas(CLOSE_ATLASES.disabled)
+    close:SetHighlightAtlas(CLOSE_ATLASES.highlight)
+    close:SetScript('OnClick', function() Clock.aceDialog:Close('CantPlayForever') end)
+    skin.close = close
+
+    -- Name und Untertitel rechts neben dem Logo.
+    local title = frame:CreateFontString(nil, 'OVERLAY', 'GameFontNormalLarge')
+    title:SetPoint('TOPLEFT', frame, 'TOPLEFT', T.OPT_TITLE_X, T.OPT_TITLE_Y)
+    title:SetText("Can't play Forever")
+    skin.title = title
+    local tagline = frame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightSmall')
+    tagline:SetPoint('TOPLEFT', title, 'BOTTOMLEFT', 0, T.OPT_TAGLINE_DY)
+    tagline:SetTextColor(0.6, 0.6, 0.6)
+    tagline:SetText(ns.L.ADDON_TAGLINE)
+    skin.tagline = tagline
+    return skin
+end
+
+-- Der Schliessen-Knopf des AceGUI-Fensters ist kein Feld des Widgets: ueber den Text suchen.
+local function AceCloseButton(open)
+    if open.cpfAceClose then return open.cpfAceClose end
+    for _, child in ipairs({open.frame:GetChildren()}) do
+        if child.obj == open and child:GetObjectType() == 'Button'
+            and child.GetText and child:GetText() == _G.CLOSE then
+            open.cpfAceClose = child
+            return child
+        end
+    end
+end
+
+-- Verschiebe-Flaeche des AceGUI-Fensters: haengt am (versteckten) Titelschild. Im Rahmen
+-- soll die ganze Kopfzeile (inkl. Uhrenkreis) das Fenster ziehen.
+local function MoverFrame(open)
+    if open.cpfMover then return open.cpfMover end
+    for _, child in ipairs({open.frame:GetChildren()}) do
+        if child:GetObjectType() == 'Frame' and child:IsMouseEnabled()
+            and select(2, child:GetPoint(1)) == open.titlebg then
+            open.cpfMover = child
+            return child
+        end
+    end
+end
+
+local function PlaceMover(open, wide)
+    local mover = MoverFrame(open)
+    if not mover then return end
+    mover:ClearAllPoints()
+    if wide then
+        mover:SetPoint('TOPLEFT', open.frame, 'TOPLEFT', 0, 0)
+        mover:SetPoint('TOPRIGHT', open.frame, 'TOPRIGHT', -(T.OPT_CLOSE_SIZE or 26), 0)
+        mover:SetHeight((T.OPT_CONTENT_TOP or 60) - 5)
+    else
+        mover:SetAllPoints(open.titlebg)
+    end
+end
+
+-- Lage aller Elemente des Rahmens aus den Tuning-Werten (Clock.tune, T.OPT_*);
+-- wird auch vom Frame_Debugger nach einer Wertaenderung aufgerufen.
+function Clock:ApplyOptionsLayout()
+    local open = self.aceDialog.OpenFrames and self.aceDialog.OpenFrames.CantPlayForever
+    local skin = open and open.cpfSkin
+    if not (skin and open.cpfLogo and open.cpfLogo.skinned) then return end
+    local logo = open.cpfLogo
+    logo:ClearAllPoints()
+    logo:SetPoint('CENTER', skin.corner, 'CENTER', T.OPT_CLOCK_DX, T.OPT_CLOCK_DY)
+    logo:SetScale(T.OPT_CLOCK_SIZE / 64)
+    logo.time:SetFont(_G.STANDARD_TEXT_FONT or 'Fonts\\FRIZQT__.TTF', T.OPT_TIME_SIZE, 'OUTLINE')
+    logo.time:ClearAllPoints()
+    logo.time:SetPoint('CENTER', logo.time:GetParent(), 'CENTER', T.OPT_TIME_DX, T.OPT_TIME_DY)
+    skin.close:SetSize(T.OPT_CLOSE_SIZE, T.OPT_CLOSE_SIZE)
+    skin.close:ClearAllPoints()
+    skin.close:SetPoint('TOPRIGHT', open.frame, 'TOPRIGHT', T.OPT_CLOSE_X, T.OPT_CLOSE_Y)
+    skin.title:ClearAllPoints()
+    skin.title:SetPoint('TOPLEFT', open.frame, 'TOPLEFT', T.OPT_TITLE_X, T.OPT_TITLE_Y)
+    skin.tagline:ClearAllPoints()
+    skin.tagline:SetPoint('TOPLEFT', skin.title, 'BOTTOMLEFT', 0, T.OPT_TAGLINE_DY)
+    open.content:SetPoint('TOPLEFT', open.frame, 'TOPLEFT', 17, -T.OPT_CONTENT_TOP)
+    PlaceMover(open, true)
+end
+
+local function SetSkin(open, shown)
+    if shown then
+        if not open.cpfSkin then
+            if not AtlasesAvailable() then return false end
+            open.cpfSkin = BuildSkin(open)
+        end
+        -- Ace-Rahmen unsichtbar machen (Farben fuer den Pool merken).
+        local frame = open.frame
+        if frame.SetBackdropColor and not open.cpfBackdropSaved then
+            open.cpfBackdropSaved = {{frame:GetBackdropColor()}, {frame:GetBackdropBorderColor()}}
+            frame:SetBackdropColor(0, 0, 0, 0)
+            frame:SetBackdropBorderColor(0, 0, 0, 0)
+        end
+    end
+    local skin = open.cpfSkin
+    if not skin then return false end
+    for _, region in ipairs(skin) do region:SetShown(shown) end
+    skin.close:SetShown(shown)
+    skin.title:SetShown(shown)
+    skin.tagline:SetShown(shown)
+    PlaceMover(open, shown)
+    local aceClose = AceCloseButton(open)
+    if aceClose then aceClose:SetShown(not shown) end
+    -- Inhalt unter die Kopfzeile (Name, Untertitel, Logo) schieben.
+    local content = open.content
+    if content then
+        content:SetPoint('TOPLEFT', open.frame, 'TOPLEFT', 17, shown and -T.OPT_CONTENT_TOP or -27)
+    end
+    if open.cpfLogo and not shown then open.cpfLogo:SetScale(1) end
+    -- Ohne unteren Schliessen-Knopf darf die Statuszeile bis zum rechten Rand reichen.
+    local statusbg = open.statustext and open.statustext:GetParent()
+    if statusbg and statusbg.GetPoint then
+        if shown and not open.cpfStatusPoint then
+            local point, relative, relPoint, x, y = statusbg:GetPoint(2)
+            if point == 'BOTTOMRIGHT' then
+                open.cpfStatusPoint = {point, relative, relPoint, x, y}
+                statusbg:SetPoint('BOTTOMRIGHT', open.frame, 'BOTTOMRIGHT', -17, y or 15)
+            end
+        elseif not shown and open.cpfStatusPoint then
+            statusbg:SetPoint(unpack(open.cpfStatusPoint))
+            open.cpfStatusPoint = nil
+        end
+    end
+    if not shown and open.cpfBackdropSaved then
+        local saved = open.cpfBackdropSaved
+        open.frame:SetBackdropColor(unpack(saved[1]))
+        open.frame:SetBackdropBorderColor(unpack(saved[2]))
+        open.cpfBackdropSaved = nil
+    end
+    return true
+end
+
 function Clock:StyleOptionsFrame()
     local open = self.aceDialog.OpenFrames and self.aceDialog.OpenFrames.CantPlayForever
     if not (open and open.frame and open.titlebg and open.titletext) then return end
@@ -197,12 +443,20 @@ function Clock:StyleOptionsFrame()
     end
     SetPlate(open, false)
     SetResizable(open, false)
+    local skinned = SetSkin(open, true)
+    open.cpfLogo:ClearAllPoints()
+    open.cpfLogo.skinned = skinned
+    if skinned then
+        self:ApplyOptionsLayout()
+    else
+        open.cpfLogo:SetPoint('TOP', open.frame, 'TOP', T.LOGO_X, T.LOGO_Y)
+    end
     open.cpfDisarm = open.cpfDisarm or BuildDisarmButton(open)
     UpdateDisarmButton(open)
     open.cpfLogo:Show()
     open.cpfLogo.currentSet = false
     ApplyLogo(open.cpfLogo)
-    open.titletext:Hide() -- der Name steht nicht mehr im Kopf, nur das Logo
+    open.titletext:Hide() -- Name und Untertitel stehen im eigenen Kopfbereich
     -- Unten: statt des Statuskastens die Version aus der .toc.
     local statusbg = open.statustext:GetParent()
     if statusbg and statusbg.SetBackdropColor and not open.cpfStatusSaved then
@@ -225,6 +479,7 @@ function Clock:StyleOptionsFrame()
             if open.cpfDisarm then open.cpfDisarm:Hide() end
             SetPlate(open, true)
             SetResizable(open, true)
+            SetSkin(open, false)
             open.titletext:Show()
             open:SetStatusText('')
             if open.cpfStatusColor then

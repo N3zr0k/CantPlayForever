@@ -14,12 +14,7 @@ local PATH = 'Interface\\AddOns\\CantPlayForever\\Media\\Analog\\'
 
 local function HandAngles(self)
     local hour, minute = self:GetHourMinute()
-    local second
-    if self.db.profile.useLocalTime then
-        second = date('*t').sec
-    else
-        second = ns.Now() % 60
-    end
+    local second = self:GetSecond()
     return ((hour % 12) + minute / 60) / 12 * 360,
         (minute + second / 60) / 60 * 360,
         second / 60 * 360
@@ -81,7 +76,7 @@ function Clock:UpdateAnalogBig()
 
     if small then
         -- Klein: Punkte als Textur (dial_dots_small, Größe T.SMALL_DOTS), Zeiger als dünne Striche;
-        -- Längen und Dicken in /cpftune einstellbar.
+        -- Längen und Dicken liegen in der zentralen Clock.tune-Tabelle.
         analog.dial:Show()
         analog.dial:SetTexture(PATH .. 'dial_dots_small')
         analog.dial:SetSize(T.SMALL_DOTS, T.SMALL_DOTS)

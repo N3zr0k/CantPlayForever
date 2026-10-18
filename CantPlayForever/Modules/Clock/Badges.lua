@@ -112,26 +112,32 @@ function Clock:LayoutBadge(frame, spec, scale)
         -(T.RING_SIZE / 2 + T.RING_MASK_DX) * ringScale, (T.RING_SIZE / 2 - T.RING_MASK_DY) * ringScale)
 end
 
+-- Layout nur bei geaenderter Groesse oder Scharf-Zustand neu berechnen: die
+-- Eingaben (Durchmesser, Wecker scharf) aendern sich selten, der Tick laeuft jede Sekunde.
 function Clock:UpdateBadges()
     local button = self.iconButton
     if not button then return end
     local diameter = self:GetClockDiameter()
-    local active = {
-        -- Symbol sobald mindestens ein Wecker angelegt ist; grünlich, wenn einer aktiviert ist.
-        alarm = diameter > ns.SMALL_DIAMETER and self:IsModuleEnabled('alarms') and #self.db.profile.alarms > 0,
-        timer = diameter > ns.SMALL_DIAMETER and self:IsModuleEnabled('timer') and self.db.profile.activeTimer ~= nil,
-    }
+    local big = diameter > ns.SMALL_DIAMETER
+    local profile = self.db.profile
+    -- Symbol sobald mindestens ein Wecker angelegt ist; grünlich, wenn einer aktiviert ist.
+    local alarm = big and self:IsModuleEnabled('alarms') and #profile.alarms > 0
+    local timer = big and self:IsModuleEnabled('timer') and profile.activeTimer ~= nil
     self.badges = self.badges or {}
     for _, spec in ipairs(BADGES) do
         local frame = self.badges[spec.key]
-        if active[spec.key] then
+        if (spec.key == 'alarm' and alarm) or (spec.key == 'timer' and timer) then
             if not frame then
                 frame = self:CreateBadge(spec)
                 self.badges[spec.key] = frame
             end
-            self:LayoutBadge(frame, spec, diameter / 64)
-            frame:Show()
-        elseif frame then
+            local armed = spec.key == 'alarm' and self:CountArmedAlarms() > 0
+            if frame.cpfDiameter ~= diameter or frame.cpfArmed ~= armed then
+                frame.cpfDiameter, frame.cpfArmed = diameter, armed
+                self:LayoutBadge(frame, spec, diameter / 64)
+            end
+            if not frame:IsShown() then frame:Show() end
+        elseif frame and frame:IsShown() then
             frame:Hide()
         end
     end

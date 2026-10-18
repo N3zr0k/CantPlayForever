@@ -1,0 +1,11 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="Locales\enUS.lua"/>
+    <Script file="Locales\deDE.lua"/>
+    <Script file="Locales\frFR.lua"/>
+    <Script file="Messages.lua"/>
+    <Script file="Notice.lua"/>
+    <Script file="Reminders.lua"/>
+    <Script file="Health.lua"/>
+    <Script file="TextEditor.lua"/>
+    <Script file="Options.lua"/>
+</Ui>
