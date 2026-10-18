@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.3.37] — Beta 1
+- Internal cleanups; no change for players.
+
 ## [0.3.36] — Beta 1
 - Options: the edit gear is slightly larger.
 

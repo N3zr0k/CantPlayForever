@@ -15,6 +15,11 @@ read_globals = {
     "GetTime", "GetServerTime", "GetGameTime", "GetCVar", "GetCursorPosition", "IsShiftKeyDown",
     "IsControlKeyDown", "IsAltKeyDown", "IsInInstance", "PlaySound", "PlaySoundFile", "LoadAddOn",
     "GetLocale", "GetAddOnMetadata", "SlashCmdList", "Minimap", "MinimapCluster", "BackdropTemplateMixin",
-    "TimeManagerClockButton", "TimeManager_Toggle", "Stopwatch_Toggle", "InterfaceOptions_AddCategory",
+    "FrameDebugger", "TimeManagerClockButton", "TimeManager_Toggle", "Stopwatch_Toggle", "InterfaceOptions_AddCategory",
 }
 globals = { "BetterClockSettings", "CantPlayForeverSettings", "SLASH_CPF1", "SLASH_CPF2" }
+
+-- Laufzeittests: Mocks setzen absichtlich WoW-Globals und ersetzen Standardfunktionen.
+files["tests/**"] = {
+    ignore = { "11", "12", "14", "43" },
+}

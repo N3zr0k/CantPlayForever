@@ -46,7 +46,8 @@ local CANDIDATE_ATLASES = {
 local function Describe(region)
     local atlas = region.GetAtlas and region:GetAtlas()
     local texture = region.GetTexture and region:GetTexture()
-    local w, h = region.GetSize and region:GetSize()
+    local w, h
+    if region.GetSize then w, h = region:GetSize() end
     return string.format('atlas=%s texture=%s size=%sx%s', tostring(atlas), tostring(texture),
         tostring(w and math.floor(w + 0.5)), tostring(h and math.floor(h + 0.5)))
 end

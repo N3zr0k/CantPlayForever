@@ -1,7 +1,7 @@
 -- Health-Texte: mehrzeiliges AceGUI-Feld ohne den eingebauten "Annehmen"-Knopf.
 -- Der Entwurf wird waehrend des Tippens aktualisiert; gespeichert wird er erst
 -- durch die explizite Aktion "Speichern" in den Health-Optionen.
-local ADDON_NAME, ns = ...
+local ADDON_NAME = ...
 local AceGUI = LibStub and LibStub('AceGUI-3.0', true)
 if not AceGUI then return end
 
