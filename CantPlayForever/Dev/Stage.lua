@@ -1,6 +1,7 @@
 -- Testbühne: vergrößerter Nachbau der Uhr (Schatten, Globus mit Maske, Ring mit Maske, Glow,
 -- Symbole) auf dunklem Grund. Liest dieselben Werte (Clock.tune) wie die echte Uhr, die
 -- Tuning-Änderungen wirken aber nur hier, bis "Auf Uhr anwenden" gedrückt wird.
+local _, ns = ...
 local addon = _G.LibStub and LibStub('AceAddon-3.0', true)
 local Clock = addon and addon:GetAddon('CantPlayForever', true)
 if not (Clock and Clock.tune and _G.FrameDebugger) then return end
@@ -8,11 +9,12 @@ local T = Clock.tune
 
 local MASK = 'Interface\\CharacterFrame\\TempPortraitAlphaMask'
 local GLOBE = 'Interface\\TimeManager\\GlobeIcon'
-local TONE = { 0.80, 0.55, 0.26 }
 local BADGE_DEFS = {
     { key = 'alarm', icon = 'Interface\\Icons\\INV_Misc_Bell_01', xKey = 'ALARM_X', yKey = 'ALARM_Y', sKey = 'ALARM_SCALE' },
     { key = 'timer', icon = 'Interface\\Icons\\INV_Misc_PocketWatch_01', xKey = 'TIMER_X', yKey = 'TIMER_Y', sKey = 'TIMER_SCALE' },
 }
+
+local HOLIDAY_SPEC = { key = 'holiday', xKey = 'HOLIDAY_X', yKey = 'HOLIDAY_Y', sKey = 'HOLIDAY_SCALE' }
 
 local function NewMask(parent)
     local mask = parent:CreateMaskTexture()
@@ -77,22 +79,14 @@ function Clock:BuildStage()
 
     stage.ring = Clock:CreateRing(box, true)
 
+    -- Symbole wie an der echten Uhr (gleiche Zeichen- und Layoutfunktion: eigene TGAs, Rahmen)
     stage.badges = {}
     for _, def in ipairs(BADGE_DEFS) do
-        local frame = CreateFrame('Frame', nil, box)
-        local disc = frame:CreateTexture(nil, 'BACKGROUND')
-        disc:SetColorTexture(0.03, 0.03, 0.05, 0.9)
-        disc:SetAllPoints(frame)
-        frame.mask = NewMask(frame)
-        disc:AddMaskTexture(frame.mask)
-        frame.icon = frame:CreateTexture(nil, 'ARTWORK')
-        frame.icon:SetTexture(def.icon)
-        frame.icon:SetTexCoord(0.12, 0.88, 0.12, 0.88)
-        frame.icon:SetDesaturated(true)
-        frame.icon:SetVertexColor(TONE[1], TONE[2], TONE[3], 1)
-        frame.ring = Clock:CreateRing(frame, true)
-        stage.badges[def.key] = frame
+        stage.badges[def.key] = Clock:CreateTimerBadge(def.key, box)
     end
+    -- Fest-Symbol wie an der echten Uhr (gleiche Zeichen- und Layoutfunktion)
+    stage.holiday = Clock:CreateTimerBadge('holiday', box)
+    stage.overlay = Clock:CreateHolidayOverlay(box)
     stage.textFrame = CreateFrame('Frame', nil, box)
     stage.textFrame:SetAllPoints(box)
     stage.time = stage.textFrame:CreateFontString(nil, 'OVERLAY', 'GameFontHighlightLarge')
@@ -159,24 +153,22 @@ function Clock:RefreshStage()
 
     for _, def in ipairs(BADGE_DEFS) do
         local frame = stage.badges[def.key]
-        local S = Z * T[def.sKey]
-        frame:SetFrameLevel(base + 4)
-        frame:SetSize(T.BADGE_SIZE * S, T.BADGE_SIZE * S)
-        frame:ClearAllPoints()
-        frame:SetPoint('CENTER', box, 'CENTER', T[def.xKey] * Z, T[def.yKey] * Z)
-        frame.mask:SetSize(T.BADGE_DISC * S, T.BADGE_DISC * S)
-        frame.mask:ClearAllPoints()
-        frame.mask:SetPoint('CENTER', frame, 'CENTER')
-        frame.icon:SetSize(T.BADGE_ICON * S, T.BADGE_ICON * S)
-        frame.icon:ClearAllPoints()
-        frame.icon:SetPoint('CENTER', frame, 'CENTER')
-        frame.icon:SetVertexColor(T.BADGE_R, T.BADGE_G, T.BADGE_B, 1)
-        frame.ring:SetFrameLevel(frame:GetFrameLevel() + 1)
-        frame.ring:SetShown(T.BADGE_RING ~= 0)
-        local rs = T.BADGE_RING_SCALE * S
-        Clock:LayoutRing(frame.ring, rs, frame, 'CENTER',
-            -(T.RING_SIZE / 2 + T.RING_MASK_DX) * rs, (T.RING_SIZE / 2 - T.RING_MASK_DY) * rs)
+        Clock:LayoutTimerBadge(frame, def, Z, box)
         frame:SetShown(T.STAGE_BADGES ~= 0)
+    end
+
+    local holiday = stage.holiday
+    local holidayIcon = Clock.holidayPreviewIcon or Clock:GetBadgeIcon() or 235462
+    holiday.styleIcon = holidayIcon
+    holiday.icon:SetTexture(Clock:IconTexture(holidayIcon))
+    holiday.icon:SetTexCoord(Clock:HolidayTexCoord(holidayIcon))
+    Clock:LayoutTimerBadge(holiday, HOLIDAY_SPEC, Z, box)
+    holiday:SetShown(T.STAGE_BADGES ~= 0)
+    if ns.HOLIDAY_OVERLAYS and ns.HOLIDAY_OVERLAYS[holidayIcon] then
+        Clock:LayoutHolidayOverlay(stage.overlay, holidayIcon, Z, box)
+        stage.overlay:Show()
+    else
+        stage.overlay:Hide()
     end
 
     -- Uhrzeit und Timer-Zahl (Beispieltexte) über allem

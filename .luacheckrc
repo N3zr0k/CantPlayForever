@@ -17,7 +17,7 @@ read_globals = {
     "GetLocale", "GetAddOnMetadata", "SlashCmdList", "Minimap", "MinimapCluster", "BackdropTemplateMixin",
     "FrameDebugger", "TimeManagerClockButton", "TimeManager_Toggle", "Stopwatch_Toggle", "InterfaceOptions_AddCategory",
 }
-globals = { "BetterClockSettings", "CantPlayForeverSettings", "SLASH_CPF1", "SLASH_CPF2" }
+globals = { "BetterClockSettings", "CantPlayForeverSettings", "SLASH_CPF1", "SLASH_CPF2", "SLASH_CPFHOLIDAYS1" }
 
 -- Laufzeittests: Mocks setzen absichtlich WoW-Globals und ersetzen Standardfunktionen.
 files["tests/**"] = {

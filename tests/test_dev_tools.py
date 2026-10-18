@@ -6,7 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ADDON = ROOT / 'CantPlayForever'
-DEV_FILES = ('Stage.lua', 'Tuning.lua', 'FrameDump.lua', 'Probe.lua')
+DEV_FILES = ('Stage.lua', 'Tuning.lua', 'FrameDump.lua', 'Probe.lua', 'HolidayList.lua')
 
 
 class DevToolsTests(unittest.TestCase):

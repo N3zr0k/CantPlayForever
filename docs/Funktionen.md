@@ -1,6 +1,6 @@
 # Funktionen
 
-* Uhr am Minimap-Button (digital/analog), Timer- und Alarm-Symbole am Rand.
+* Uhr am Minimap-Button (digital/analog), Timer- und Alarm-Symbole am Rand, Fest-Symbol oben rechts (Kalender, mit Tooltip).
 * Blizzard-Addon-Menü (AddonCompartmentFrame): eigener Eintrag mit Uhrsymbol; Klick öffnet **Allgemein** in den Optionen, Mouseover erklärt die Uhrenbedienung. Die Minimap-Klickaktionen bleiben separat.
 * Alarme: täglich, Wochentage, Datum (monatlich/jährlich), wiederholend; Entschärfen per Strg + Linksklick. Der Alarmtyp verwendet 1/3 der Formularbreite, der Knopf **Alle Tage** steht vor Mo–So und die Felder Tag/Monat/Jahr teilen sich eine Zeile.
 * Timer: mehrere Vorgaben, ein aktiver, Start/Stop per Sanduhr.

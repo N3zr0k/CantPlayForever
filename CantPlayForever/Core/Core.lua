@@ -69,7 +69,7 @@ local TUNE_DEFAULTS = {
     SMALL_DX = 0, SMALL_DY = 0.5, -- Kleine Uhr (Standardrahmen): Mitte auf der Scheibe
     SMALL_DOTS = 26, -- Punkte: Größe des Punktebilds (größer = weiter außen)
     SMALL_HOUR_LEN = 5, SMALL_HOUR_W = 1.5, SMALL_MIN_LEN = 10, SMALL_MIN_W = 0.75, -- Zeiger: Länge und Dicke (Pixel)
-    TIMER_ICON_SIZE = 28, TIMER_FRAME_SIZE = 53, ALARM_ICON_SIZE = 28, ALARM_FRAME_SIZE = 53, -- Symbol und Rahmen einzeln (Bibliothekseinheiten)
+    TIMER_ICON_SIZE = 25.5, TIMER_FRAME_SIZE = 53, ALARM_ICON_SIZE = 25.5, ALARM_FRAME_SIZE = 53, -- Symbol und Rahmen einzeln (Bibliothekseinheiten)
     BADGE_FRAME_R = 1.1, BADGE_FRAME_G = 1.1, BADGE_FRAME_B = 0.95, BADGE_FRAME_DESAT = 0, -- Timer-/Alarm-Symbol: Rahmenfarbe (Standardrahmen der Bibliothek)
     TIMER_ICON_R = 0.25, TIMER_ICON_G = 1, TIMER_ICON_B = 0.25, TIMER_ICON_DESAT = 0, -- Timer-Symbol: Farbe (1/1/1 = Original)
     ALARM_ARMED_R = 0.25, ALARM_ARMED_G = 1, ALARM_ARMED_B = 0.25, -- Alarm-Symbol bei aktivierten Weckern (grünlich)
@@ -86,12 +86,52 @@ local TUNE_DEFAULTS = {
     ROW_EDIT_SIZE = 22, ROW_EDIT_X = 0, ROW_EDIT_Y = 0,         -- Zahnrad (Bearbeiten)
     ROW_DEL_SIZE = 18, ROW_DEL_X = 0, ROW_DEL_Y = 0,            -- Papierkorb
     ALARM_SCALE = 1, TIMER_SCALE = 1,                              -- Einzelgrößen (Faktor)
-    ALARM_X = -24, ALARM_Y = 25, TIMER_X = -30.5, TIMER_Y = 12, -- Statussymbole (Mitte relativ zum Button)
+    ALARM_X = -26, ALARM_Y = 23, TIMER_X = -33, TIMER_Y = 8, -- Statussymbole (Mitte relativ zum Button)
+    ALARM_ICON_X = 1, ALARM_ICON_Y = -1.5, TIMER_ICON_X = 1, TIMER_ICON_Y = -2, -- Bild im Rahmen verschieben
+    HOLIDAY_X = 28, HOLIDAY_Y = 20.5, HOLIDAY_SCALE = 1.35,           -- Fest-Symbol oben rechts (Mitte relativ zum Button)
+    HOLIDAY_ICON_SIZE = 28, HOLIDAY_FRAME_SIZE = 53,             -- Symbol und Rahmen (Bibliothekseinheiten)
+    HOLIDAY_ICON_R = 1, HOLIDAY_ICON_G = 1, HOLIDAY_ICON_B = 1, HOLIDAY_ICON_DESAT = 0, HOLIDAY_ICON_CROP = 0.08, HOLIDAY_TIP_ICON_SIZE = 24, HOLIDAY_TIP_ICON_Y = -5, HOLIDAY_MASK_SIZE = 22, HOLIDAY_GENERIC_ICON = 'Interface\\Icons\\INV_Misc_Note_01', -- allgemeines Kalender-Symbol
+    HOLIDAY_ICON_ROUND = 1, -- Symbolgroesse im Tooltip (Pixel)
+    HOLIDAY_ICON_X = 0, HOLIDAY_ICON_Y = 0, HOLIDAY_CROP_X = 0, HOLIDAY_CROP_Y = 0,
+    HOLIDAY_OVERLAY_SIZE = 67, HOLIDAY_OVERLAY_X = -3, HOLIDAY_OVERLAY_Y = 0, HOLIDAY_OVERLAY_ALPHA = 1, -- Fest-Dekoration um die Uhr (Bibliothekseinheiten) -- Originalfarbe des Fest-Symbols
 }
 
 local T = {}
 
 ns.T = T
+
+-- Einstellungen einzelner Fest-Symbole (Schluessel = Textur-ID des Symbols); fehlende Werte kommen aus
+-- TUNE_DEFAULTS. Entsteht mit dem Frame Debugger: Symbol durchschalten, einstellen, "Stile ausgeben".
+--   [235462] = { HOLIDAY_ICON_SIZE = 28, HOLIDAY_ICON_X = 0, HOLIDAY_ICON_Y = 0, HOLIDAY_ICON_CROP = 0.08, HOLIDAY_MASK_SIZE = 22 },
+-- Dekoration (Overlay) um die Uhr waehrend eines Festes: Textur je Symbol-ID. Groesse und Position je Fest
+-- ueber die Stile (HOLIDAY_OVERLAY_SIZE/_X/_Y/_ALPHA).
+ns.HOLIDAY_OVERLAYS = {
+    [235462] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_schlotternaechte', -- Schlotternaechte
+    [235477] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_nobelgartenfest', -- nobelgartenfest
+    [235465] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_erntedankfest', -- erntedankfest
+    [235468] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_liebe', -- liebe
+    [235471] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_mondfest', -- mondfest
+    [235485] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_winterhauchfest', -- winterhauchfest
+    [235474] = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_sonnenwendfest', -- Sonnenwendfest
+    darkmoon = 'Interface\\AddOns\\CantPlayForever\\Media\\Holiday\\overlay_dunkelmond', -- Dunkelmond-Jahrmarkt (ohne Kalendersymbol)
+}
+-- Feste ohne eigenes Kalendersymbol, die trotzdem ein Overlay bekommen: Schluessel des Overlays -> Ereignis-ID
+-- und Namensbestandteile (kleingeschrieben, alle Sprachen).
+ns.HOLIDAY_OVERLAY_MATCH = {
+    darkmoon = { ids = { [479] = true }, names = { 'dunkelmond', 'darkmoon', 'sombrelune' } },
+}
+
+ns.HOLIDAY_STYLES = {
+    [235458] = { HOLIDAY_ICON_SIZE = 34, HOLIDAY_ICON_X = 4.5, HOLIDAY_ICON_Y = -7.5, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = 0, HOLIDAY_CROP_Y = 0, HOLIDAY_MASK_SIZE = 0 }, -- Anglerwettbewerb im Schlingendorntal
+    [235462] = { HOLIDAY_ICON_SIZE = 30, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = 0, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.11, HOLIDAY_CROP_Y = -0.15, HOLIDAY_MASK_SIZE = 21.5, HOLIDAY_OVERLAY_SIZE = 65, HOLIDAY_OVERLAY_X = -9, HOLIDAY_OVERLAY_Y = 0.5, HOLIDAY_OVERLAY_ALPHA = 1 }, -- Schlotternaechte
+    [235465] = { HOLIDAY_ICON_SIZE = 30, HOLIDAY_ICON_X = 2.5, HOLIDAY_ICON_Y = -2.5, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.11, HOLIDAY_CROP_Y = -0.15, HOLIDAY_MASK_SIZE = 24 }, -- Erntedankfest
+    [235468] = { HOLIDAY_ICON_SIZE = 46, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = -2, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.15, HOLIDAY_CROP_Y = -0.14, HOLIDAY_MASK_SIZE = 24 }, -- Liebe liegt in der Luft
+    [235471] = { HOLIDAY_ICON_SIZE = 28, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = -2, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.14, HOLIDAY_CROP_Y = -0.22, HOLIDAY_MASK_SIZE = 24 }, -- Mondfest
+    [235474] = { HOLIDAY_ICON_SIZE = 24.5, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = -2, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.18, HOLIDAY_CROP_Y = -0.16, HOLIDAY_MASK_SIZE = 24 }, -- Sonnenwendfest
+    [235477] = { HOLIDAY_ICON_SIZE = 26.5, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = -2, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.14, HOLIDAY_CROP_Y = -0.16, HOLIDAY_MASK_SIZE = 24 }, -- Nobelgartenfest
+    [235485] = { HOLIDAY_ICON_SIZE = 36, HOLIDAY_ICON_X = 1.5, HOLIDAY_ICON_Y = -2, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = -0.14, HOLIDAY_CROP_Y = -0.22, HOLIDAY_MASK_SIZE = 24, HOLIDAY_OVERLAY_SIZE = 65, HOLIDAY_OVERLAY_X = -8.5, HOLIDAY_OVERLAY_Y = 0.5, HOLIDAY_OVERLAY_ALPHA = 1 }, -- Winterhauchfest
+    ["darkmoon"] = { HOLIDAY_ICON_SIZE = 34, HOLIDAY_ICON_X = 4.5, HOLIDAY_ICON_Y = -7.5, HOLIDAY_ICON_CROP = 0, HOLIDAY_CROP_X = 0, HOLIDAY_CROP_Y = 0, HOLIDAY_MASK_SIZE = 0, HOLIDAY_OVERLAY_SIZE = 65, HOLIDAY_OVERLAY_X = -8.5, HOLIDAY_OVERLAY_Y = 0.5, HOLIDAY_OVERLAY_ALPHA = 1 }, -- Dunkelmond-Jahrmarkt
+}
 
 for key, value in pairs(TUNE_DEFAULTS) do T[key] = value end
 
@@ -112,6 +152,8 @@ local DEFAULTS = {
     profile = {
         minimap = { hide = false, minimapPos = 90 },
         useLocalTime = true,
+        holidaySymbol = true, -- Fest-Symbol (Kalender) an der Uhr
+        holidayDisplay = 'both', -- Anzeige eines Festes an der Uhr: 'overlay' | 'both' | 'icon'
         hideBlizzardClock = true, -- Blizzard-Uhr ausblenden, solange unsere Uhr sichtbar ist
         clockStyle = 'digital', -- 'digital' | 'analog' (für alle Größen)
         use24Hour = true,

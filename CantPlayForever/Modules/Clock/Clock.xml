@@ -8,6 +8,7 @@
     <Script file="Ring.lua"/>
     <Script file="Glow.lua"/>
     <Script file="Badges.lua"/>
+    <Script file="Holidays.lua"/>
     <Script file="Tooltip.lua"/>
     <Script file="BlizzardClock.lua"/>
     <Script file="OptionsLogo.lua"/>

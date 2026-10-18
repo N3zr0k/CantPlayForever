@@ -47,6 +47,8 @@ function Clock:TooltipSignature()
         'played:' .. tostring(self.playtimeReceived == true),
         'fresh:' .. tostring(self.playtimeFreshForHover == true),
         'pending:' .. tostring(self.playtimePending == true)}
+    for _, holiday in ipairs(self:GetActiveHolidays()) do fields[#fields + 1] = 'holiday:' .. holiday.title end
+    fields[#fields + 1] = 'calendar:' .. tostring(self:CalendarMinute())
     for _, alarm in ipairs(self.db.profile.alarms) do
         if alarm.armed then
             fields[#fields + 1] = tostring(alarm.id) .. ':'
@@ -228,6 +230,7 @@ function Clock:BuildHoverTooltip(tooltip)
                 1, 1, 1, .75, 1, .75)
         end
     end
+    self:AddCalendarLines(tooltip)
     tooltip:AddLine(' ')
     AddHint(tooltip, L.LEFT_CLICK)
     AddHint(tooltip, L.RIGHT_CLICK)

@@ -90,6 +90,9 @@ local function NewClient()
     }}
     assert(loadfile(source))('CantPlayForever', ns)
     assert(loadfile('CantPlayForever/Modules/Clock/Tooltip.lua'))('CantPlayForever', ns)
+    ns.Clock.GetActiveHolidays = function() return {} end
+    ns.Clock.CalendarMinute = function() return 0 end
+    ns.Clock.AddCalendarLines = function() end
     clock.db.profile = {alarms = {}, activeTimer = nil}
     clock.FormatTooltipTime = function() return '12:34:56' end
     clock.Duration = function(_, seconds) return tostring(seconds) .. 's' end

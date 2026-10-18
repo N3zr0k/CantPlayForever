@@ -21,7 +21,8 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Core/Options.lua` | Optionen Tab Allgemein, Effekte, Bestätigungsabfrage Löschen, Modulschalter | modules, scope | modules, alarmConfirmDelete, alarmRepeats, alarmSound, oapLevel, glowSpeed, playSound, screenGlow, screenGlowSkipInstances, screenGlowSpec |
 | `Core/RowIcons.lua` | Icon-Buttons in Listenzeilen (Blizzard-Zahnrad, Blizzard-Löschatlas mit Fallback, graue Symbole mit blauer/roter Hover-Farbe, Tooltip) | – | – |
 | `Dev/Tuning.lua` | Meldet Tuning-Werte, Gruppen, Anwenden-Logik und Aktionen beim Frame Debugger an (nur Repo, per `.pkgmeta` aus dem Release ausgeschlossen) | – | – |
-| `Dev/Stage.lua`, `Dev/FrameDump.lua`, `Dev/Probe.lua` | Testbühne, Rahmen-Diagnose und `/cpf probe`-Befehle für den Frame Debugger (nur Repo) | – | – |
+| `Dev/Stage.lua`, `Dev/FrameDump.lua`, `Dev/Probe.lua` | Testbühne, Rahmen-Diagnose und `/cpf probe`-Befehle für den Frame Debugger (nur Repo) |
+| `Dev/HolidayList.lua` | `/cpfholidays [Jahr]` liest alle Kalender-Feste eines Jahres aus (nur Repo) | – | – |
 | `Core/ScreenGlow.lua` | Leuchten am Bildschirmrand | screenGlow, screenGlowSkipInstances, screenGlowSpec | – |
 | `Media/Analog/dial_dots_small.tga` | Grafik | – | – |
 | `Media/Analog/dial_ticks.tga` | Grafik | – | – |
@@ -47,7 +48,8 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Modules/Alarms/Locales/frFR.lua` | Texte frFR | – | – |
 | `Modules/Alarms/Options.lua` | Alarmliste, Edit-Modus, Zeitplan-Eingabe | alarms | alarmDisarmOrder |
 | `Modules/Clock/AnalogClock.lua` | Analoge Uhr | activeTimer, useLocalTime | – |
-| `Modules/Clock/Badges.lua` | Symbole am Uhrenrand (Timer, Alarm) | activeTimer, alarms | – |
+| `Modules/Clock/Badges.lua` | Symbole am Uhrenrand (Timer, Alarm, Fest) | activeTimer, alarms, holidaySymbol | – |
+| `Modules/Clock/Holidays.lua` | Laufende Feste aus dem Spielkalender (Symbol, Tooltip, Fest-Dekoration um die Uhr, Options-Reiter Kalender mit Festliste) | holidaySymbol, holidayHidden, global.holidayCatalog | C_Calendar |
 | `Modules/Clock/BlizzardClock.lua` | Original-Uhr ausblenden, Stoppuhr, Menü Original-Uhr | – | – |
 | `Modules/Clock/Clock.lua` | Minimap-Uhr, Klick-Aktionen | clockStyle, minimap, minimapPositions, use24Hour, useLocalTime | clockSize, freeClock |
 | `Modules/Clock/Clock.xml` | Ladeliste | – | – |

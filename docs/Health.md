@@ -1,4 +1,4 @@
-# Health – Stand 0.3.37-latest.1
+# Health – Stand 0.4.24-beta.1
 
 Das optionale Modul ist standardmäßig ausgeschaltet (Allgemein → Module → Health). Die drei Erinnerungskategorien **Bewegung**, **Trinken** und **Augenpausen** sind innerhalb des Moduls standardmäßig aktiviert.
 
