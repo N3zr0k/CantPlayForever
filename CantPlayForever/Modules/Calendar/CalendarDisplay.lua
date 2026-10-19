@@ -246,7 +246,8 @@ local function TooltipServerTimes()
     for line = 1, tip:NumLines() do
         local right = _G['GameTooltipTextRight' .. line]
         local text = right and right:GetText()
-        local hour, minute, suffix = text and text:match('^(%d+):(%d+)%s*(%a*)$')
+        local hour, minute, suffix
+        if text then hour, minute, suffix = text:match('^(%d+):(%d+)%s*(%a*)$') end
         if hour then
             hour, minute = tonumber(hour), tonumber(minute)
             local lower = suffix:lower()

@@ -165,9 +165,9 @@ assert(label:find('|cffffd100Alarm am: 19.10.2026 20:45 (Serverzeit)|r', 1, true
 choose.args.none.func()
 assert(choose.args.run.disabled() == true, 'nichts gewaehlt: Knopf aus')
 choose.args.all.func()
-local before = #alarms
+local countNow = #alarms
 choose.args.run.func()
-assert(#alarms == before + 1 and alarms[#alarms].name == 'Zweiter' and choose.hidden() == true, 'Auswahl uebernommen, Maske zu')
+assert(#alarms == countNow + 1 and alarms[#alarms].name == 'Zweiter' and choose.hidden() == true, 'Auswahl uebernommen, Maske zu')
 -- Termin mit eventID: Verschiebung und Umbenennung aktualisieren denselben Alarm
 dayEvents[20261019][#dayEvents[20261019] + 1] = {title = 'Baustelle', kind = 'PLAYER', eventID = 77, eventType = 'MEETING',
     start = {year = 2026, month = 10, day = 19, hour = 10, minute = 0}}
@@ -222,8 +222,8 @@ local removedText = Clock:CalendarLinkOptions().args.choose.args.e1.name()
 assert(removedText:find('Im Kalender', 1, true) or removedText:find('Baustelle', 1, true), 'Zeile fuer geloeschten Termin')
 Clock.calLinkCandidates = nil
 local countBefore = #alarms
-local made, dropped = Clock:ImportCalendarAlarms({gone})
-assert(made == 0 and dropped == 1 and #alarms == countBefore - 1, 'Alarm entfernt')
+local createdCount, dropped = Clock:ImportCalendarAlarms({gone})
+assert(createdCount == 0 and dropped == 1 and #alarms == countBefore - 1, 'Alarm entfernt')
 for _, item in ipairs(Clock:CollectCalendarEvents()) do assert(not item.removed or item.key ~= 'id:77', 'danach nichts mehr') end
 
 -- Aelterer Alarm ohne gespeicherte Terminart: sie wird aus der Alarmfarbe erkannt
