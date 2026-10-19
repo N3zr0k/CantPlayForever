@@ -4,6 +4,11 @@ local Clock, L = ns.Clock, ns.L
 
 local editing = {} -- alarm id -> Bearbeitungsbereich aufgeklappt
 
+-- Alarm im Bearbeitungsbereich aufklappen (z. B. beim Klick auf den Alarm im Spielkalender)
+function ns.EditAlarm(id)
+    if id then editing[id] = true end
+end
+
 local function RemoveAlarm(alarm)
     for index, alarmEntry in ipairs(Clock.db.profile.alarms) do
         if alarmEntry.id == alarm.id then
@@ -20,7 +25,8 @@ local ConfirmDelete = function() return ns.ConfirmDelete() end
 
 local draftOpen = false -- Anlege-Maske aufgeklappt
 local draft = {alarmHour = 19, alarmMinute = 0, alarmName = '', days = {true, true, true, true, true, true, true},
-    everyMonth = true, everyYear = true, repeating = false, alarmType = 'alarm', customEffect = false}
+    everyMonth = true, everyYear = true, repeating = false, alarmType = 'alarm', customEffect = false, inCalendar = true,
+    calendarIcon = false}
 
 local DAY_ORDER = {2, 3, 4, 5, 6, 7, 1} -- Mo..So (WoW: 1 = Sonntag)
 
@@ -209,12 +215,24 @@ local function AlarmArgs()
             get = function() return draft.alarmType or 'alarm' end,
             set = function(_, value) draft.alarmType = value end,
         },
+        inCalendar = {
+            type = 'toggle', name = L.ALARM_IN_CALENDAR, desc = L.ALARM_IN_CALENDAR_DESC, order = 4.2, width = 'full',
+            get = function() return draft.inCalendar ~= false end,
+            set = function(_, value) draft.inCalendar = value end,
+        },
+        calendarIcon = {
+            type = 'toggle', name = L.ALARM_CALENDAR_ICON, desc = L.ALARM_CALENDAR_ICON_DESC, order = 4.3, width = 'full',
+            disabled = function() return draft.inCalendar == false end,
+            get = function() return draft.calendarIcon == true end,
+            set = function(_, value) draft.calendarIcon = value end,
+        },
         add = {
             type = 'execute', name = L.ADD_ALARM, order = 6,
             func = function()
                 local db = Clock.db.profile
                 table.insert(db.alarms, {
                     id = db.nextAlarmID,
+                    uid = ns.NewAlarmUID and ns.NewAlarmUID() or nil,
                     hour = draft.alarmHour,
                     minute = draft.alarmMinute,
                     name = draft.alarmName,
@@ -229,6 +247,8 @@ local function AlarmArgs()
                     everyMonth = draft.everyMonth, everyYear = draft.everyYear,
                     repeating = draft.repeating,
                     alarmType = draft.alarmType or 'alarm',
+                    inCalendar = draft.inCalendar ~= false,
+                    calendarIcon = draft.calendarIcon == true,
                     customEffect = draft.customEffect == true,
                     effect = draft.effect and CopyTable(draft.effect) or nil,
                 })
@@ -339,8 +359,31 @@ local function AlarmArgs()
             alarmType = {
                 type = 'select', name = L.ALARM_TYPE, order = 4.1, width = 1,
                 desc = L.ALARM_TYPE_DESC, values = ns.AlarmTypeValues,
+                disabled = function() return current.calendarKey ~= nil end, -- importierte Alarme behalten ihren Typ
                 get = function() return current.alarmType or 'alarm' end,
                 set = function(_, value) current.alarmType = value Clock:NotifyOptions() end,
+            },
+            calendarSource = {
+                type = 'description', order = 4.15, width = 2, fontSize = 'medium',
+                hidden = function() return current.calendarKey == nil end,
+                name = '   |TInterface\\common\\help-i:24:24:0:-2|t |cff999999' .. string.format(L.ALARM_IMPORTED_FROM, current.calendarSource == 'game' and L.CALLINK_SOURCE_GAME or 'Classic Calendar - Revived') .. '|r', -- Abstand links, Info-Symbol
+            },
+            calendarSourceBreak = { -- Zeilenumbruch nach dem Hinweis
+                type = 'description', order = 4.16, width = 'full', name = '',
+                hidden = function() return current.calendarKey == nil end,
+            },
+            inCalendar = {
+                type = 'toggle', name = L.ALARM_IN_CALENDAR, desc = L.ALARM_IN_CALENDAR_DESC, order = 4.2, width = 'full',
+                hidden = function() return current.calendarKey ~= nil end, -- aus dem Kalender importiert: nicht zurueckspiegeln
+                get = function() return current.inCalendar ~= false end,
+                set = function(_, value) current.inCalendar = value Clock:NotifyOptions() end,
+            },
+            calendarIcon = {
+                type = 'toggle', name = L.ALARM_CALENDAR_ICON, desc = L.ALARM_CALENDAR_ICON_DESC, order = 4.3, width = 'full',
+                hidden = function() return current.calendarKey ~= nil end,
+                disabled = function() return current.inCalendar == false end,
+                get = function() return current.calendarIcon == true end,
+                set = function(_, value) current.calendarIcon = value Clock:NotifyOptions() end,
             },
         }
         for k, option in pairs(ScheduleArgs(current, 5, function() Clock:NotifyOptions() end)) do

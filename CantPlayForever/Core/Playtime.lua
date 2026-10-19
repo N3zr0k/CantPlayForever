@@ -479,7 +479,9 @@ function Clock:EnablePlaytime()
             self:SavePlaytimeEstimate()
         elseif event == 'MODIFIER_STATE_CHANGED' then
             local key, pressed = ...
-            if type(key) == 'string' and key:find('SHIFT', 1, true) then
+            if type(key) == 'string' and key:find('CTRL', 1, true) then
+                if self.UpdateHoverTooltip then self:UpdateHoverTooltip() end
+            elseif type(key) == 'string' and key:find('SHIFT', 1, true) then
                 if pressed == 1 or pressed == true then
                     -- Nur Shift beim tatsächlichen Uhr-Mouseover löst /played aus.
                     self:RequestPlayedOnShift()

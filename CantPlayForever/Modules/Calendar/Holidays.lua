@@ -34,6 +34,51 @@ local function Seconds(calendarTime)
     return days * 86400 + (calendarTime.hour or 0) * 3600 + (calendarTime.minute or 0) * 60
 end
 
+-- Termin mit Uhrzeit am Ende (z. B. 14-16 Uhr), das schon vorbei ist: nicht mehr anzeigen.
+-- Enden ohne Uhrzeit (00:00) zaehlen als ganztaegig.
+local function HasEnded(event, now)
+    local finish = event.endTime
+    if not (now and type(finish) == 'table') or ((finish.hour or 0) == 0 and (finish.minute or 0) == 0) then return false end
+    local finishAt = Seconds(finish)
+    return finishAt ~= nil and finishAt <= now
+end
+
+-- Unterschied Ortszeit - Serverzeit in Sekunden (auf Viertelstunden gerundet), 0 bei Serverzeit-Anzeige (force: immer).
+function Clock:LocalOffset(force)
+    if not (self.db and (force or self.db.profile.useLocalTime)) then return 0 end
+    local dateApi = _G.C_DateAndTime
+    local server = dateApi and dateApi.GetCurrentCalendarTime and Seconds(dateApi.GetCurrentCalendarTime())
+    local info = type(_G.date) == 'function' and _G.date('*t')
+    local localNow = info and Seconds({ year = info.year, month = info.month, monthDay = info.day, hour = info.hour, minute = info.min })
+    if not (server and localNow) then return 0 end
+    return math.floor((localNow - server) / 900 + 0.5) * 900
+end
+
+-- Kalenderzeit um delta Sekunden verschoben: { year, month, monthDay, hour, minute }.
+function Clock:ShiftTime(time, delta)
+    local total = Seconds(time) + delta
+    local days = math.floor(total / 86400)
+    local rest = total - days * 86400
+    local z = days + 719468
+    local era = math.floor(z / 146097)
+    local doe = z - era * 146097
+    local yoe = math.floor((doe - math.floor(doe / 1460) + math.floor(doe / 36524) - math.floor(doe / 146096)) / 365)
+    local doy = doe - (365 * yoe + math.floor(yoe / 4) - math.floor(yoe / 100))
+    local mp = math.floor((5 * doy + 2) / 153)
+    local day = doy - math.floor((153 * mp + 2) / 5) + 1
+    local month = mp < 10 and mp + 3 or mp - 9
+    local year = yoe + era * 400 + (month <= 2 and 1 or 0)
+    return { year = year, month = month, monthDay = day, hour = math.floor(rest / 3600), minute = math.floor(rest % 3600 / 60) }
+end
+
+-- Termin mit Uhrzeit (Serverzeit) in die angezeigte Zeit umrechnen. Ganztaegige Angaben (00:00) bleiben.
+function Clock:DisplayTime(time)
+    if type(time) ~= 'table' or not time.year or ((time.hour or 0) == 0 and (time.minute or 0) == 0) then return time end
+    local offset = self:LocalOffset()
+    if offset == 0 then return time end
+    return self:ShiftTime(time, offset)
+end
+
 function Clock:CalendarMinute()
     local dateApi = _G.C_DateAndTime
     local now = dateApi and dateApi.GetCurrentCalendarTime and Seconds(dateApi.GetCurrentCalendarTime())
@@ -90,7 +135,7 @@ function Clock:IconTexture(icon)
 end
 
 -- Datum mit Uhrzeit, wenn der Termin eine bestimmte Uhrzeit hat (nicht 00:00).
-function Clock:FormatHolidayDateTime(time)
+local function DateTimeText(self, time)
     local text = self:FormatHolidayDate(time)
     if type(time) == 'table' and ((time.hour or 0) ~= 0 or (time.minute or 0) ~= 0) then
         text = string.format('%s %02d:%02d', text, time.hour or 0, time.minute or 0)
@@ -100,6 +145,7 @@ end
 
 -- Ingame-Kalender: "18.10.2026 - 4:00 Uhr bis 20.10.2026 - 4:00 Uhr" (Uhrzeit nur wenn vorhanden)
 function Clock:FormatHolidayGameRange(startTime, endTime)
+    startTime, endTime = self:DisplayTime(startTime), self:DisplayTime(endTime)
     local L = ns.L
     local function Part(time)
         local text = self:FormatHolidayDate(time)
@@ -114,7 +160,8 @@ end
 
 -- "18.10.2026 04:00 - 02.11.2026 04:00"; am selben Tag "18.10.2026 14:00 - 16:00".
 function Clock:FormatHolidayRange(startTime, endTime)
-    local first = self:FormatHolidayDateTime(startTime)
+    startTime, endTime = self:DisplayTime(startTime), self:DisplayTime(endTime)
+    local first = DateTimeText(self, startTime)
     if type(startTime) == 'table' and type(endTime) == 'table' and startTime.year == endTime.year
         and startTime.month == endTime.month and startTime.monthDay == endTime.monthDay then
         if (endTime.hour or 0) ~= 0 or (endTime.minute or 0) ~= 0 then
@@ -158,7 +205,13 @@ function Clock:AddCalendarLines(tooltip, mode)
     if not self.db or not self:CalendarModuleOn() then return end
     if mode ~= 'game' and self.db.profile.holidaySymbol == false then return end
     local L = ns.L
-    local running = mode == 'game' and (self.todayAll or {}) or self:GetActiveHolidays()
+    local dateApi = _G.C_DateAndTime
+    local now = dateApi and dateApi.GetCurrentCalendarTime and Seconds(dateApi.GetCurrentCalendarTime())
+    -- Beendete Termine des Tages (z. B. Anglerwettbewerb nach 16 Uhr) auch zwischen zwei Abfragen ausblenden
+    local running = {}
+    for _, holiday in ipairs(mode == 'game' and (self.todayAll or {}) or self:GetActiveHolidays()) do
+        if not HasEnded(holiday, now) then running[#running + 1] = holiday end
+    end
     local nextHoliday, seconds = self:GetNextHoliday(mode == 'game')
     if #running == 0 and not nextHoliday then return end
     if mode ~= 'badge' then tooltip:AddLine(' ') end
@@ -193,7 +246,7 @@ function Clock:AddCalendarLines(tooltip, mode)
         -- Fest grau mit Datum rechts, darunter der Countdown in Blau
         tooltip:AddDoubleLine(Icon(nextHoliday) .. nextHoliday.title,
             self:FormatHolidayRange(nextHoliday.startTime, nextHoliday.endTime), 0.65, 0.65, 0.65, 0.65, 0.65, 0.65)
-        tooltip:AddLine('|cff63c9ff' .. countdown .. '|r', 0.65, 0.65, 0.65)
+        tooltip:AddLine(DOT .. '|cff63c9ff' .. countdown .. '|r', 0.65, 0.65, 0.65)
     end
 end
 
@@ -239,15 +292,6 @@ end
 
 -- Gleicht die Festliste mit dem Kalender ab. Ist das Kalenderfenster offen, bleibt
 -- die Liste unveraendert (der Spieler blaettert dort evtl. in einem anderen Monat).
--- Termin mit Uhrzeit am Ende (z. B. 14-16 Uhr), das schon vorbei ist: nicht mehr anzeigen.
--- Enden ohne Uhrzeit (00:00) zaehlen als ganztaegig.
-local function HasEnded(event, now)
-    local finish = event.endTime
-    if not (now and type(finish) == 'table') or ((finish.hour or 0) == 0 and (finish.minute or 0) == 0) then return false end
-    local finishAt = Seconds(finish)
-    return finishAt ~= nil and finishAt <= now
-end
-
 function Clock:ScanHolidays()
     local api = CalendarApi()
     -- Nicht waehrend des Jahres-Einlesens und nicht aus dem eigenen SetAbsMonth heraus (loest
@@ -427,6 +471,22 @@ function Clock:HolidayOptions()
                     self.db.profile.holidaySymbol = value
                     if self.UpdateBadges then self:UpdateBadges() end
                 end },
+            alarms = { type = 'toggle', order = 2, width = 'full', name = L.CALLINK_SHOW, desc = L.CALLINK_SHOW_DESC,
+                get = function() return self.db.profile.calLinkShow ~= false end,
+                set = function(_, value)
+                    self.db.profile.calLinkShow = value
+                    if self.SyncAlarmsToCalendar then self:SyncAlarmsToCalendar(true) end
+                end },
+            showDays = { type = 'range', order = 2.2, width = 'double', name = L.CALENDAR_SHOW_DAYS, desc = L.CALENDAR_SHOW_DAYS_DESC,
+                min = 7, max = 365, step = 1,
+                get = function() return self.db.profile.calLinkShowDays or 60 end,
+                set = function(_, value)
+                    self.db.profile.calLinkShowDays = value
+                    if self.SyncAlarmsToCalendar then self:SyncAlarmsToCalendar(true) end
+                end },
+            localTimes = { type = 'toggle', order = 2.5, width = 'full', name = L.CALENDAR_LOCAL_TIMES, desc = L.CALENDAR_LOCAL_TIMES_DESC,
+                get = function() return self.db.profile.calLocalTimes ~= false end,
+                set = function(_, value) self.db.profile.calLocalTimes = value end },
             display = { type = 'select', order = 1, width = 'double', name = L.CALENDAR_DISPLAY, desc = L.CALENDAR_DISPLAY_DESC,
                 disabled = Off,
                 values = { overlay = L.DISPLAY_OVERLAY, both = L.DISPLAY_BOTH, icon = L.DISPLAY_ICON },
@@ -437,6 +497,7 @@ function Clock:HolidayOptions()
                     if self.UpdateBadges then self:UpdateBadges() end
                 end },
             holidays = holidays,
+            calendarLink = self.CalendarLinkOptions and self:CalendarLinkOptions() or nil,
         },
     }
 end

@@ -3,6 +3,7 @@
     <Include file="Clock\Clock.xml"/>
     <Include file="Timer\Timer.xml"/>
     <Include file="Alarms\Alarms.xml"/>
+    <Include file="Calendar\Calendar.xml"/>
     <Include file="Health\Health.xml"/>
     <Include file="Statistics\Statistics.xml"/>
     <Include file="Events\Events.xml"/>

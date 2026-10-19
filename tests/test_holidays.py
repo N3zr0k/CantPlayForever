@@ -11,12 +11,15 @@ ADDON = ROOT / 'CantPlayForever'
 
 class HolidayTests(unittest.TestCase):
     def test_wiring(self):
-        self.assertIn('Holidays.lua', (ADDON / 'Modules' / 'Clock' / 'Clock.xml').read_text(encoding='utf-8'))
+        calendar_xml = (ADDON / 'Modules' / 'Calendar' / 'Calendar.xml').read_text(encoding='utf-8')
+        self.assertIn('Holidays.lua', calendar_xml)
+        self.assertIn('CalendarLink.lua', calendar_xml)
+        self.assertIn('Calendar\\Calendar.xml', (ADDON / 'Modules' / 'Modules.xml').read_text(encoding='utf-8'))
         badges = (ADDON / 'Modules' / 'Clock' / 'Badges.lua').read_text(encoding='utf-8')
         self.assertIn("key = 'holiday'", badges)
         self.assertIn('AddCalendarLines', badges)
         for locale in ('deDE', 'enUS', 'frFR'):
-            text = (ADDON / 'Modules' / 'Clock' / 'Locales' / f'{locale}.lua').read_text(encoding='utf-8')
+            text = (ADDON / 'Modules' / 'Calendar' / 'Locales' / f'{locale}.lua').read_text(encoding='utf-8')
             for key in ('CALENDAR_SHOW', 'CALENDAR_DISPLAY', 'DISPLAY_OVERLAY', 'DISPLAY_BOTH', 'DISPLAY_ICON', 'HOLIDAYS_TAB'):
                 self.assertIn(f'L.{key} =', text)
 
@@ -40,6 +43,33 @@ class HolidayTests(unittest.TestCase):
                                 capture_output=True, text=True, timeout=15)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('Holidays OK', result.stdout)
+
+    def test_calendar_link_in_lua(self):
+        lua = next((shutil.which(e) for e in ('lua', 'lua5.4', 'lua5.3', 'luajit') if shutil.which(e)), None)
+        if lua is None:
+            self.skipTest('Lua interpreter unavailable (CI uses Lua)')
+        result = subprocess.run([lua, 'tests/calendarlink_runtime.lua'], cwd=ROOT,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('CalendarLink OK', result.stdout)
+
+    def test_calendar_display_in_lua(self):
+        lua = next((shutil.which(e) for e in ('lua', 'lua5.4', 'lua5.3', 'luajit') if shutil.which(e)), None)
+        if lua is None:
+            self.skipTest('Lua interpreter unavailable (CI uses Lua)')
+        result = subprocess.run([lua, 'tests/calendardisplay_runtime.lua'], cwd=ROOT,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('CalendarDisplay OK', result.stdout)
+
+    def test_calendar_tooltip_in_lua(self):
+        lua = next((shutil.which(e) for e in ('lua', 'lua5.4', 'lua5.3', 'luajit') if shutil.which(e)), None)
+        if lua is None:
+            self.skipTest('Lua interpreter unavailable (CI uses Lua)')
+        result = subprocess.run([lua, 'tests/calendartooltip_runtime.lua'], cwd=ROOT,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('CalendarTooltip OK', result.stdout)
 
     def test_year_scan_in_lua(self):
         lua = next((shutil.which(e) for e in ('lua', 'lua5.4', 'lua5.3', 'luajit') if shutil.which(e)), None)

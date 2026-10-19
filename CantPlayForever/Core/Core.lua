@@ -153,6 +153,10 @@ local DEFAULTS = {
         minimap = { hide = false, minimapPos = 90 },
         useLocalTime = true,
         holidaySymbol = true, -- Fest-Symbol (Kalender) an der Uhr
+        calLinkShow = true, -- Alarme im Kalender (Classic Calendar / Ingame-Tooltip) anzeigen
+        calLinkShowDays = 60, -- Tage im Voraus, fuer die wiederholende Alarme im Kalender stehen
+        calLinkDays = 14, -- Zeitraum (Tage) fuer Alarme aus Kalenderterminen
+        calLinkLead = 15, -- Vorlauf (Minuten) fuer Alarme aus Kalendertermine
         holidayDisplay = 'both', -- Anzeige eines Festes an der Uhr: 'overlay' | 'both' | 'icon'
         hideBlizzardClock = true, -- Blizzard-Uhr ausblenden, solange unsere Uhr sichtbar ist
         clockStyle = 'digital', -- 'digital' | 'analog' (für alle Größen)
@@ -345,11 +349,15 @@ function Clock:MigrateProfile(isNewProfile)
         p.presetsInitialized = true
     end
     local maxAlarmID = 0
+    local usedUIDs = {}
     for _, alarm in ipairs(p.alarms) do
         ns.MigrateAlarm(alarm)
+        -- Jeder Alarm hat eine eigene, dauerhafte UID (Kennung im Kalender); Doppelte (Profilkopie) bekommen eine neue
+        if type(alarm.uid) ~= 'string' or alarm.uid == '' or usedUIDs[alarm.uid] then alarm.uid = ns.NewAlarmUID() end
+        usedUIDs[alarm.uid] = true
         -- Alarm-Kategorie erstmals speichern; alte Alarme sind weiterhin Wecker.
         if alarm.alarmType ~= 'alarm' and alarm.alarmType ~= 'event'
-            and alarm.alarmType ~= 'reminder' then
+            and alarm.alarmType ~= 'reminder' and alarm.alarmType ~= 'calendar' then
             alarm.alarmType = 'alarm'
         end
         if type(alarm.effect) ~= 'table' then alarm.customEffect = false end
@@ -363,6 +371,13 @@ function Clock:MigrateProfile(isNewProfile)
     end
     p.nextAlarmID = math.max(tonumber(p.nextAlarmID) or 1, maxAlarmID + 1)
     p.nextPresetID = math.max(tonumber(p.nextPresetID) or 4, maxPresetID + 1)
+end
+
+-- Neue eindeutige Alarm-Kennung: Zeit + Zufall + Zaehler (ohne "#", das trennt im Kalender den Tag ab).
+local uidCounter = 0
+function ns.NewAlarmUID()
+    uidCounter = uidCounter + 1
+    return string.format('%x%x%x', time(), math.random(0, 0xFFFFFF), uidCounter)
 end
 
 -- Alarm-Zeitplan (Version 2): Wochentage (days), Datum (day/month/year) mit "jeden Monat"/"jedes
@@ -404,15 +419,16 @@ function Clock:NotifyOptions()
         LibStub('AceConfigRegistry-3.0'):NotifyChange('CantPlayForever')
     end
     self:RunHook('OnChanged', true)
+    if self.QueueCalendarLinkSync then self:QueueCalendarLinkSync() end
 end
 
 -- An explicit page opens that page even when the window is already visible.
 -- Without a page this behaves as a toggle for /bc.
-function Clock:OpenSettings(page)
+function Clock:OpenSettings(page, ...)
     self:Debug('Opening options: %s', tostring(page))
     if page then
         self.aceDialog:Open('CantPlayForever')
-        self.aceDialog:SelectGroup('CantPlayForever', page)
+        self.aceDialog:SelectGroup('CantPlayForever', page, ...)
     elseif self.aceDialog.OpenFrames and self.aceDialog.OpenFrames.CantPlayForever then
         self.aceDialog:Close('CantPlayForever')
         return

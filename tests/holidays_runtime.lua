@@ -21,7 +21,7 @@ C_Calendar = {
     SetAbsMonth = function() setCalls = setCalls + 1; if setCalls < 50 then Clock:ScanHolidays() end end,
     GetMonthInfo = function() return {month = 9, year = 2026} end,
 }
-assert(loadfile('CantPlayForever/Modules/Clock/Holidays.lua'))('CantPlayForever', ns)
+assert(loadfile('CantPlayForever/Modules/Calendar/Holidays.lua'))('CantPlayForever', ns)
 assert(#Clock:GetActiveHolidays() == 0)
 Clock:ScanHolidays()
 assert(setCalls == 1, 'SetAbsMonth loest keine Rekursion aus: ' .. setCalls)
@@ -134,6 +134,20 @@ local updatesBeforeTimed = updates
 events[4] = {calendarType = 'HOLIDAY', eventID = 10, title = 'Anglerwettbewerb', iconTexture = 124,
     startTime = {year = 2026, month = 10, monthDay = 18, hour = 14, minute = 0},
     endTime = {year = 2026, month = 10, monthDay = 18, hour = 16, minute = 0}}
+-- Ortszeit-Anzeige: Server 04:00 = lokal 06:00 (+2 h), Termine mit Uhrzeit werden umgerechnet
+local realDate = _G.date
+Clock.db.profile.useLocalTime = true
+_G.date = function() return {year = 2026, month = 10, day = 18, hour = 6, min = 0} end
+assert(Clock:FormatHolidayRange({year = 2026, month = 10, monthDay = 18, hour = 14, minute = 0},
+    {year = 2026, month = 10, monthDay = 18, hour = 16, minute = 0}):find('16:00 %- 18:00'), 'Ortszeit +2 h')
+local shifted = Clock:DisplayTime({year = 2026, month = 12, monthDay = 31, hour = 23, minute = 0})
+assert(shifted.year == 2027 and shifted.month == 1 and shifted.monthDay == 1 and shifted.hour == 1, 'Tageswechsel')
+assert(Clock:DisplayTime({year = 2026, month = 10, monthDay = 18, hour = 0, minute = 0}).hour == 0, 'ganztaegig bleibt')
+Clock.db.profile.useLocalTime = false
+_G.date = realDate
+assert(Clock:FormatHolidayRange({year = 2026, month = 10, monthDay = 18, hour = 14, minute = 0},
+    {year = 2026, month = 10, monthDay = 18, hour = 16, minute = 0}):find('14:00 %- 16:00'), 'Serverzeit unveraendert')
+
 local realTime = C_DateAndTime.GetCurrentCalendarTime
 C_DateAndTime.GetCurrentCalendarTime = function() return {year = 2026, month = 10, monthDay = 18, hour = 15, minute = 0} end
 Clock:ScanHolidays()

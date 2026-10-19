@@ -1,0 +1,10 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="Locales\enUS.lua"/>
+    <Script file="Locales\deDE.lua"/>
+    <Script file="Locales\frFR.lua"/>
+    <Script file="CalendarRange.lua"/>
+    <Script file="Holidays.lua"/>
+    <Script file="CalendarLink.lua"/>
+    <Script file="CalendarDisplay.lua"/>
+    <Script file="CalendarTooltip.lua"/>
+</Ui>

@@ -30,7 +30,7 @@ C_Calendar = {
     GetNumDayEvents = function(_, day) return #((calendar[current] or {})[day] or {}) end,
     GetDayEvent = function(_, day, i) return calendar[current][day][i] end,
 }
-assert(loadfile('CantPlayForever/Modules/Clock/Holidays.lua'))('CantPlayForever', ns)
+assert(loadfile('CantPlayForever/Modules/Calendar/Holidays.lua'))('CantPlayForever', ns)
 Clock:ScanHolidayYear()
 assert(viewed[1] == 202609 and viewed[14] == 202710, 'rollierend: ab Vormonat bis Okt 2027')
 assert(viewed[#viewed] == 202610, 'Ansicht zurueck auf den aktuellen Monat')

@@ -81,6 +81,24 @@ _G.SlashCmdList.CPFHOLIDAYS = function(arg)
                 tostring(e.iconTexture), s.monthDay, s.month, s.year, f.monthDay, f.month, f.year,
                 tostring(e.numSequenceDays))
         end
+        -- Heutige Eintraege mit Uhrzeiten (Grundlage fuer das Ausblenden beendeter Termine)
+        local today = _G.C_DateAndTime and C_DateAndTime.GetCurrentCalendarTime()
+        if today and year == today.year then
+            local api = _G.C_Calendar
+            api.SetAbsMonth(today.month, today.year)
+            lines[#lines + 1] = ''
+            lines[#lines + 1] = string.format('-- Heute %02d.%02d.%04d, jetzt %02d:%02d (eventID | Titel | Sequenz | Beginn | Ende)',
+                today.monthDay, today.month, today.year, today.hour or 0, today.minute or 0)
+            for index = 1, api.GetNumDayEvents(0, today.monthDay) or 0 do
+                local e = api.GetDayEvent(0, today.monthDay, index)
+                if e and e.calendarType == 'HOLIDAY' then
+                    local s, f = e.startTime, e.endTime
+                    lines[#lines + 1] = string.format('%s | %s | %s | %02d.%02d. %02d:%02d | %02d.%02d. %02d:%02d',
+                        tostring(e.eventID), e.title, tostring(e.sequenceType), s.monthDay, s.month, s.hour or 0, s.minute or 0,
+                        f.monthDay, f.month, f.hour or 0, f.minute or 0)
+                end
+            end
+        end
         Show(table.concat(lines, '\n'))
     end)
 end

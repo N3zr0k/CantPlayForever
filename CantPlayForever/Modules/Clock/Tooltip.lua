@@ -44,6 +44,8 @@ end
 function Clock:TooltipSignature()
     local fields = {self.db.profile.activeTimer and 'timer' or 'no-timer', 'cover:' .. tostring(self.coverName),
         'shift:' .. tostring(type(_G.IsShiftKeyDown) == 'function' and IsShiftKeyDown() or false),
+        'ctrl:' .. tostring(type(_G.IsControlKeyDown) == 'function' and IsControlKeyDown() or false),
+        'cache:' .. tostring(self.calFetching == true),
         'played:' .. tostring(self.playtimeReceived == true),
         'fresh:' .. tostring(self.playtimeFreshForHover == true),
         'pending:' .. tostring(self.playtimePending == true)}
@@ -203,6 +205,8 @@ function Clock:BuildHoverTooltip(tooltip)
     else
         AddBlueInfoHint(tooltip)
     end
+    -- Strg: eine weitere Zeile unter dem Shift-Hinweis (ohne Info-Symbol)
+    if self.AddCtrlHint then self:AddCtrlHint(tooltip) end
     local active = {}
     for _, alarm in ipairs(self.db.profile.alarms) do
         if alarm.armed then active[#active + 1] = alarm end
@@ -228,9 +232,14 @@ function Clock:BuildHoverTooltip(tooltip)
                     return name
                 end)(),
                 1, 1, 1, .75, 1, .75)
+            -- importierter Alarm: der eigentliche Termin in Orts- und Serverzeit
+            local eventText = alarm.calendarKey and self.ImportedAlarmEventText and self:ImportedAlarmEventText(alarm)
+            if eventText then tooltip:AddLine('   ' .. eventText, .65, .65, .65) end
+            if self.AddCtrlAlarmDetails and self.CtrlDown and self.CtrlDown() then self:AddCtrlAlarmDetails(tooltip, alarm) end
         end
     end
     self:AddCalendarLines(tooltip)
+    if self.AddCtrlDetails and self.CtrlDown and self.CtrlDown() then self:AddCtrlDetails(tooltip) end
     tooltip:AddLine(' ')
     AddHint(tooltip, L.LEFT_CLICK)
     AddHint(tooltip, L.RIGHT_CLICK)

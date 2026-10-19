@@ -55,7 +55,7 @@ class PerAlarmOptions(unittest.TestCase):
         for locale in ('deDE','enUS','frFR'):
             s = (A/f'Modules/Alarms/Locales/{locale}.lua').read_text()
             for key in ('ALARM_TYPE', 'ALARM_TYPE_DESC', 'ALARM_TYPE_ALARM',
-                        'ALARM_TYPE_EVENT', 'ALARM_TYPE_REMINDER',
+                        'ALARM_TYPE_EVENT', 'ALARM_TYPE_CALENDAR', 'ALARM_IN_CALENDAR', 'ALARM_IN_CALENDAR_DESC', 'ALARM_CALENDAR_ICON', 'ALARM_CALENDAR_ICON_DESC', 'ALARM_IMPORTED_FROM', 'ALARM_TYPE_REMINDER',
                         'ALARM_CUSTOM_EFFECT', 'ALARM_CUSTOM_EFFECT_DESC'):
                 self.assertIn('L.'+key+' =',s)
 

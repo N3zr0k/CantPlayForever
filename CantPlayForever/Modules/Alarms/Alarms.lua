@@ -7,17 +7,30 @@ local ALARM_TYPE_TEXTURES = {
     alarm = 'Interface\\Icons\\INV_Misc_PocketWatch_01',
     event = 'Interface\\Icons\\INV_Misc_Book_09',
     reminder = 'Interface\\Icons\\INV_Misc_Note_01',
+    -- Symbol von Classic Calendar - Revived; ohne das Addon das Event-Symbol
+    calendar = 'Interface\\AddOns\\ClassicCalendar\\Textures\\ClassicCalendarIcon',
 }
 function ns.AlarmTypeValues()
-    return {
+    local values = {
         alarm = ns.AlarmTypeIcon('alarm', 16) .. ' ' .. L.ALARM_TYPE_ALARM,
         event = ns.AlarmTypeIcon('event', 16) .. ' ' .. L.ALARM_TYPE_EVENT,
         reminder = ns.AlarmTypeIcon('reminder', 16) .. ' ' .. L.ALARM_TYPE_REMINDER,
     }
+    if Clock.CalendarLinkAvailable and Clock:CalendarLinkAvailable() then
+        values.calendar = ns.AlarmTypeIcon('calendar', 16) .. ' ' .. L.ALARM_TYPE_CALENDAR
+    end
+    return values
 end
-function ns.AlarmTypeIcon(alarm, size)
+function ns.AlarmTypeTexture(alarm)
     local kind = type(alarm) == 'table' and alarm.alarmType or alarm
     local texture = ALARM_TYPE_TEXTURES[kind] or ALARM_TYPE_TEXTURES.alarm
+    if kind == 'calendar' and not (Clock.CalendarLinkAvailable and Clock:CalendarLinkAvailable()) then
+        texture = ALARM_TYPE_TEXTURES.event
+    end
+    return texture
+end
+function ns.AlarmTypeIcon(alarm, size)
+    local texture = ns.AlarmTypeTexture(alarm)
     size = tonumber(size) or 16
     return string.format('|T%s:%d:%d:0:0|t', texture, size, size)
 end
@@ -79,6 +92,8 @@ local function RunsOnDay(alarm, offset, year, month, day)
     return (alarm.everyMonth or info.month == (alarm.month or month))
         and (alarm.everyYear or info.year == (alarm.year or year))
 end
+
+ns.AlarmRunsOnDay = RunsOnDay
 
 function Clock:AlarmRunsToday(alarm)
     local _, year, month, day = self:GetToday()

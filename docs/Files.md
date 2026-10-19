@@ -49,7 +49,11 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Modules/Alarms/Options.lua` | Alarmliste, Edit-Modus, Zeitplan-Eingabe | alarms | alarmDisarmOrder |
 | `Modules/Clock/AnalogClock.lua` | Analoge Uhr | activeTimer, useLocalTime | – |
 | `Modules/Clock/Badges.lua` | Symbole am Uhrenrand (Timer, Alarm, Fest) | activeTimer, alarms, holidaySymbol | – |
-| `Modules/Clock/Holidays.lua` | Laufende Feste aus dem Spielkalender (Symbol, Tooltip, Fest-Dekoration um die Uhr, Options-Reiter Kalender mit Festliste) | holidaySymbol, holidayHidden, global.holidayCatalog | C_Calendar |
+| `Modules/Calendar/Holidays.lua` | Modul Calendar: Laufende Feste aus dem Spielkalender (Symbol, Tooltip, Fest-Dekoration um die Uhr, Options-Reiter Kalender mit Festliste) | holidaySymbol, holidayHidden, global.holidayCatalog | C_Calendar |
+| `Modules/Calendar/CalendarLink.lua` | Alarme als Termine in Classic Calendar - Revived, Kalendertermine (auch aus dem Spielkalender) per Knopf als Alarme | calLinkShow, calLinkLead | ClassicCalendar.API |
+| `Modules/Calendar/CalendarRange.lua` | Zeitraum der Alarme im Kalender: Einzelalarme immer, wiederholende nur die eingestellten Tage voraus | calLinkShowDays | - |
+| `Modules/Calendar/CalendarDisplay.lua` | Alarme als lokale Einträge im Spielkalender (ohne Classic Calendar), kein Servertermin | calLinkShow | C_Calendar, CalendarFrame |
+| `Modules/Calendar/CalendarTooltip.lua` | Strg am Uhr-Tooltip: Alarm-Details und naechste Kalendereintraege (Typ, Zusage, Beschreibung, Teilnehmer) | - | C_Calendar |
 | `Modules/Clock/BlizzardClock.lua` | Original-Uhr ausblenden, Stoppuhr, Menü Original-Uhr | – | – |
 | `Modules/Clock/Clock.lua` | Minimap-Uhr, Klick-Aktionen | clockStyle, minimap, minimapPositions, use24Hour, useLocalTime | clockSize, freeClock |
 | `Modules/Clock/Clock.xml` | Ladeliste | – | – |

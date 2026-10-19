@@ -13,7 +13,7 @@ class CompartmentRegistration(unittest.TestCase):
         self.assertIn('<Script file="AddonCompartment.lua"/>', load)
         self.assertLess(load.index('AddonCompartment.lua'), load.index('Options.lua'))
         self.assertIn("self:GuardedTick('compartment.register', self.RegisterAddonCompartment)", core)
-        self.assertIn('function Clock:OpenSettings(page)', core)
+        self.assertIn('function Clock:OpenSettings(page, ...)', core)
 
     def test_optional_registration_not_a_second_minimap_launcher(self):
         code = (ADDON / "Core/AddonCompartment.lua").read_text(encoding="utf-8")
