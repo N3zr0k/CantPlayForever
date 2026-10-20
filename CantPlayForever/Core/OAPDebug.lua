@@ -45,17 +45,80 @@ end
 function Clock:RegisterOAPDebug() return OAP() ~= nil end
 function Clock:IsOAPDebugAvailable() return OAP() ~= nil end
 
+-- BugLab (optional, Console API): every technical message goes to one logger "CantPlayForever",
+-- regardless of the OAP level; BugLab filters (SetLevel), rate-limits and keeps the history itself.
+local unpack = unpack or table.unpack
+local BUGLAB_METHOD = { debug = 'Debug', info = 'Info', warn = 'Warn', error = 'Error' }
+local bugApi, bugLogger
+
+local function BugLabLogger()
+    local api = _G.BugLab
+    if type(api) ~= 'table' or type(api.GetLogger) ~= 'function' then
+        bugApi, bugLogger = nil, nil
+        return nil
+    end
+    if bugApi ~= api then
+        local ok, logger = pcall(api.GetLogger, api, SOURCE)
+        if not (ok and type(logger) == 'table') then return nil end
+        bugApi, bugLogger = api, logger
+    end
+    return bugLogger
+end
+
+function Clock:IsBugLabAvailable() return BugLabLogger() ~= nil end
+
+-- BugLab formats like string.format and colours the inserted values blue, so the
+-- OAP style template "Tick {1} failed: {2}" becomes "Tick %s failed: %s".
+local function BraceToFormat(template, ...)
+    local values, args = { ... }, {}
+    local text = tostring(template):gsub('%%', '%%%%')
+    text = text:gsub('{(%d+)}', function(n)
+        args[#args + 1] = tostring(values[math.max(tonumber(n), 1)])
+        return '%s'
+    end)
+    return text, args
+end
+
+local function SendBugLab(level, format, ...)
+    local logger = BugLabLogger()
+    local method = logger and BUGLAB_METHOD[level]
+    if not (method and type(logger[method]) == 'function') then return end
+    if not pcall(logger[method], logger, format, ...) then
+        -- A stray % in a finished text must not swallow the message.
+        pcall(logger[method], logger, '%s', tostring(format))
+    end
+end
+
+-- One login line in BugLab: "Angemeldet, Version X, Debug aktiviert/deaktiviert".
+-- Debug counts as active at the detailed OAP level (the addon's only debug mode).
+function Clock:AnnounceBugLab()
+    local logger = BugLabLogger()
+    if not (logger and type(logger.Announce) == 'function') then return end
+    local getMeta = _G.C_AddOns and C_AddOns.GetAddOnMetadata or _G.GetAddOnMetadata
+    local ok, version = pcall(getMeta or function() end, ADDON_NAME, 'Version')
+    pcall(logger.Announce, logger, {
+        version = ok and version or nil,
+        debug = CurrentLevel() >= LEVEL.detailed,
+    })
+end
+
 function Clock:OAPLog(level, template, ...)
     if not LOG_LEVEL[level] then return end
+    if BugLabLogger() then
+        local format, args = BraceToFormat(template, ...)
+        SendBugLab(level, format, unpack(args))
+    end
     local api = Enabled(LOG_LEVEL[level])
     if api then pcall(api.Log, SOURCE, template, level, ...) end
 end
 
 -- Older modules use printf-style debug calls; keep that contract.
 function Clock:Debug(template, ...)
+    if BugLabLogger() then SendBugLab('debug', tostring(template), ...) end
     if not Enabled(LEVEL.detailed) then return end
     local ok, message = pcall(string.format, tostring(template), ...)
-    self:OAPLog('debug', ok and message or tostring(template))
+    local api = OAP()
+    if api then pcall(api.Log, SOURCE, ok and message or tostring(template), 'debug') end
 end
 
 -- Metrics use OAP's *native* API so they appear on its Metrics tab/chart.

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.2] — Latest 1
+- New: if BugLab is installed, the addon sends its technical messages (debug, warnings, errors) to BugLab's console. BugLab also gets one line at login with the addon version and whether debug mode is on. Normal chat messages stay as they are.
+
 ## [0.5.0] — Latest 1
 - New: holiday calendar. While a major in-game holiday runs (Hallow's End, Noblegarden, Harvest Festival, Love is in the Air, Lunar Festival, Midsummer, Feast of Winter Veil, Darkmoon Faire), the medium and large clock shows its icon and a themed decoration around the clock; hover the icon for name, start and end. The clock tooltip and the in-game calendar button tooltip list the running and the next holiday with a countdown. The new Calendar tab in the options lets you choose overlay only, overlay and icon, or icon only, and which holidays are shown. Finished events of the day are hidden.
 - New: alarms in the calendar. Your alarms appear as entries in the in-game calendar (only on your computer, never as a server event) or, if installed, in Classic Calendar - Revived. Single alarms with a fixed date are always listed; repeating alarms are listed for the number of days set in the Calendar options (default 60). Each alarm can be left out of the calendar, and its type icon can be shown (off by default). Alarms with their own color appear in that color; a click on an alarm in the in-game calendar opens it in the alarm options.

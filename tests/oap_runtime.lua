@@ -45,6 +45,41 @@ clock.db.global.oapLevel = 'errors'
 clock:OAPLog('warn', 'Ignored warning')
 clock:OAPLog('error', 'A problem: {1}', 'failed')
 assert(#messages == 3 and messages[3][3] == 'error')
+-- BugLab Console API: all levels arrive regardless of the OAP level, with %s-style formats.
+local bug = {}
+local announced = {}
+GetAddOnMetadata = function(_, field) return field == 'Version' and '9.9.9' or nil end
+local loggers = {}
+BugLab = { GetLogger = function(_, source)
+    loggers[#loggers + 1] = source
+    local logger = {}
+    for _, name in ipairs({'Debug', 'Info', 'Warn', 'Error'}) do
+        logger[name] = function(_, fmt, ...) bug[#bug + 1] = {name, string.format(fmt, ...)} end
+    end
+    logger.Announce = function(_, info) announced[#announced + 1] = info end
+    return logger
+end }
+assert(clock:IsBugLabAvailable() and loggers[1] == 'CantPlayForever')
+clock.db.global.oapLevel = 'normal'
+clock:AnnounceBugLab()
+assert(#announced == 1 and announced[1].version == '9.9.9' and announced[1].debug == false)
+clock.db.global.oapLevel = 'detailed'
+clock:AnnounceBugLab()
+assert(announced[2].debug == true)
+clock.db.global.oapLevel = 'normal'
+clock:Debug('Value: %s', 'x')
+assert(bug[#bug][1] == 'Debug' and bug[#bug][2] == 'Value: x', 'debug must reach BugLab below detailed')
+clock.db.global.oapLevel = 'errors'
+clock:OAPLog('warn', 'Slot {2} of {1} 100%', 'a', 'b')
+assert(bug[#bug][1] == 'Warn' and bug[#bug][2] == 'Slot b of a 100%', bug[#bug][2])
+clock:Debug('broken %d', 'oops')
+assert(bug[#bug][2] == 'broken %d', 'bad format must not lose the message')
+assert(#loggers == 1, 'logger is created once')
+BugLab = nil
+assert(not clock:IsBugLabAvailable())
+clock:Debug('no BugLab')
+clock:AnnounceBugLab()
+clock.db.global.oapLevel = 'errors'
 local failed = function() error('intentionally broken') end
 clock:GuardedTick('notice', failed)
 assert(#messages == 4 and messages[4][3] == 'error')

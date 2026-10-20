@@ -493,6 +493,8 @@ function Clock:OnEnable()
     -- Er darf die zentrale Tick-Registrierung niemals verhindern.
     self:GuardedTick('compartment.register', self.RegisterAddonCompartment)
     self:OAPLog('info', 'Addon enabled (profile: {1})', self:ProfileName())
+    -- AceAddon enables at PLAYER_LOGIN: report the login to BugLab exactly once.
+    self:GuardedTick('buglab.announce', self.AnnounceBugLab)
     local function Update()
         self:OAPStartTimer('core.tick')
         -- Alarmmeldung und Leuchten zuerst und einzeln abgesichert: ein Fehler in einem
