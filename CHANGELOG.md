@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.3] — Latest 1
+- Internal cleanups; no change for players.
+
 ## [0.5.2] — Latest 1
 - New: if BugLab is installed, the addon sends its technical messages (debug, warnings, errors) to BugLab's console. BugLab also gets one line at login with the addon version and whether debug mode is on. Normal chat messages stay as they are.
 

@@ -118,3 +118,5 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `docs/images/health/*.png` | PNG-Quellen der Health-Grafiken (Bewegung/Trinken je Fraktion, Augenpause) (nicht im Addon-Paket) | – | – |
 | `docs/images/timer_hourglass.png` | Quelle der Sanduhr im Timer-Menü (nicht im Addon-Paket) | – | – |
 | `docs/images/delete_bin.png` | Quelle des goldenen Papierkorbs (nicht im Addon-Paket) | – | – |
+| `docs/images/CantPlayForever_Header_light.png` | Header hell (GitHub, README) (nicht im Addon-Paket) | – | – |
+| `docs/images/CantPlayForever_Header_dark.png` | Header dunkel (CurseForge) (nicht im Addon-Paket) | – | – |
