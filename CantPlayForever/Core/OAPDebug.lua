@@ -47,7 +47,7 @@ function Clock:IsOAPDebugAvailable() return OAP() ~= nil end
 
 -- BugLab (optional, Console API): every technical message goes to one logger "CantPlayForever",
 -- regardless of the OAP level; BugLab filters (SetLevel), rate-limits and keeps the history itself.
-local unpack = unpack or table.unpack
+local unpack = _G.unpack or _G.table.unpack
 local BUGLAB_METHOD = { debug = 'Debug', info = 'Info', warn = 'Warn', error = 'Error' }
 local bugApi, bugLogger
 

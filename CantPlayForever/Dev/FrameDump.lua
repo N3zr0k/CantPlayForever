@@ -1,12 +1,11 @@
 -- Rahmen-Diagnose und Ring-Vorschau für Can't play Forever (Entwicklung, nur im Repo).
---   /cpf frame        Texturen des Optionsfensters im Chat + 4-fach vergrößerte Ecke
---   /cpf probe ring   Ring-Atlas prüfen und Vorschau ein-/ausblenden
+-- Wird von den BugLab-Probes "frame" und "ring" in Dev/Probes.lua benutzt (kein eigener Slash-Befehl).
 local addon = _G.LibStub and LibStub('AceAddon-3.0', true)
 local Clock = addon and addon:GetAddon('CantPlayForever', true)
-if not (Clock and Clock.RegisterModule and _G.FrameDebugger) then return end
+if not Clock then return end
 
 -- Diagnose: zeigt den Ring-Atlas ungeschnitten (links) und den Globus (rechts)
--- auf dunklem Grund in Originalgröße. Erneut /cpf probe ring schließt die Vorschau.
+-- auf dunklem Grund in Originalgröße. Erneut aufgerufen blendet sie die Vorschau aus.
 function Clock:ToggleRingPreview()
     if self.ringPreview then
         self.ringPreview:SetShown(not self.ringPreview:IsShown())
@@ -35,8 +34,8 @@ function Clock:ToggleRingPreview()
 end
 
 
--- Rahmen-Diagnose: /cpf frame gibt die Texturen der
--- Fensterränder im Chat aus und zeigt die obere linke Ecke 4-fach vergrößert mit 8-px-Raster.
+-- Rahmen-Diagnose: gibt die Texturen der
+-- Fensterränder ins Probe-Log aus und zeigt die obere linke Ecke 4-fach vergrößert mit 8-px-Raster.
 local CANDIDATE_ATLASES = {
     'UI-Frame-DiamondMetal-CornerTopLeft', 'UI-Frame-Metal-CornerTopLeft',
     'UI-Frame-Diamond-CornerTopLeft', 'UI-Frame-SimpleMetal-CornerTopLeft',
@@ -52,33 +51,41 @@ local function Describe(region)
         tostring(w and math.floor(w + 0.5)), tostring(h and math.floor(h + 0.5)))
 end
 
-function Clock:DumpOptionsFrame()
+function Clock:HideCornerPreview()
+    if self.cornerPreview then self.cornerPreview:Hide() end
+end
+
+-- log: Logger der Probe (ctx.log); ohne Logger geht die Ausgabe in den Chat.
+function Clock:DumpOptionsFrame(log)
+    local function say(text)
+        if log then log:Info('%s', text) else self:Print(text) end
+    end
     local open = self.aceDialog.OpenFrames and self.aceDialog.OpenFrames.CantPlayForever
     if not (open and open.frame) then
-        self:Print('Optionsfenster zuerst öffnen (/cpf), dann /cpf frame.')
+        say('Optionsfenster zuerst öffnen (/cpf), dann die Probe frame starten.')
         return
     end
     local frame = open.frame
-    self:Print('Rahmen-Diagnose:')
+    say('Rahmen-Diagnose:')
     local nine = frame.NineSlice
     if nine then
         for _, key in ipairs({'TopLeftCorner', 'TopRightCorner', 'TopEdge', 'LeftEdge', 'BottomLeftCorner'}) do
-            if nine[key] then self:Print('  NineSlice.' .. key .. ': ' .. Describe(nine[key])) end
+            if nine[key] then say('  NineSlice.' .. key .. ': ' .. Describe(nine[key])) end
         end
     else
-        self:Print('  kein NineSlice am Fenster')
+        say('  kein NineSlice am Fenster')
     end
     local n = 0
     for _, region in ipairs({frame:GetRegions()}) do
         if region.GetObjectType and region:GetObjectType() == 'Texture' then
             n = n + 1
-            if n <= 24 then self:Print(string.format('  Region %d: %s', n, Describe(region))) end
+            if n <= 24 then say(string.format('  Region %d: %s', n, Describe(region))) end
         end
     end
     local api = _G.C_Texture
     for _, name in ipairs(CANDIDATE_ATLASES) do
         local info = api and api.GetAtlasInfo and api.GetAtlasInfo(name)
-        self:Print(string.format('  Atlas %s: %s', name,
+        say(string.format('  Atlas %s: %s', name,
             info and string.format('%sx%s', tostring(info.width), tostring(info.height)) or 'nicht vorhanden'))
     end
     -- Vorschau der Ecke
@@ -131,5 +138,5 @@ function Clock:DumpOptionsFrame()
         end
     end
     f:Show()
-    self:Print('Vorschau: ' .. tostring(atlasName) .. ' (gelbe Linien alle 8 Pixel). Erneut /cpf frame zum Aktualisieren, /reload zum Schließen.')
+    say('Vorschau: ' .. tostring(atlasName) .. ' (gelbe Linien alle 8 Pixel). Probe erneut starten zum Aktualisieren, Beenden blendet sie aus.')
 end

@@ -21,8 +21,10 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Core/Options.lua` | Optionen Tab Allgemein, Effekte, Bestätigungsabfrage Löschen, Modulschalter | modules, scope | modules, alarmConfirmDelete, alarmRepeats, alarmSound, oapLevel, glowSpeed, playSound, screenGlow, screenGlowSkipInstances, screenGlowSpec |
 | `Core/RowIcons.lua` | Icon-Buttons in Listenzeilen (Blizzard-Zahnrad, Blizzard-Löschatlas mit Fallback, graue Symbole mit blauer/roter Hover-Farbe, Tooltip) | – | – |
 | `Dev/Tuning.lua` | Meldet Tuning-Werte, Gruppen, Anwenden-Logik und Aktionen beim Frame Debugger an (nur Repo, per `.pkgmeta` aus dem Release ausgeschlossen) | – | – |
-| `Dev/Stage.lua`, `Dev/FrameDump.lua`, `Dev/Probe.lua` | Testbühne, Rahmen-Diagnose und `/cpf probe`-Befehle für den Frame Debugger (nur Repo) |
-| `Dev/HolidayList.lua` | `/cpfholidays [Jahr]` liest alle Kalender-Feste eines Jahres aus (nur Repo) | – | – |
+| `Dev/Stage.lua` | Testbühne für den Frame Debugger (nur Repo, ohne Frame Debugger ohne Wirkung) | – | – |
+| `Dev/FrameDump.lua` | Ring-Vorschau und Rahmen-Diagnose, von den BugLab-Probes genutzt (nur Repo) | – | – |
+| `Dev/Probes.lua` | Meldet die Probes `ring`, `glow`, `alert`, `frame`, `holidays` bei BugLab an (nur Repo, ohne BugLab ohne Wirkung) | – | – |
+| `Dev/HolidayList.lua` | `Clock:CollectHolidays(Jahr, log)` liest alle Kalender-Feste eines Jahres ins Probe-Log (Probe `holidays`, nur Repo) | – | – |
 | `Core/ScreenGlow.lua` | Leuchten am Bildschirmrand | screenGlow, screenGlowSkipInstances, screenGlowSpec | – |
 | `Media/Analog/dial_dots_small.tga` | Grafik | – | – |
 | `Media/Analog/dial_ticks.tga` | Grafik | – | – |
