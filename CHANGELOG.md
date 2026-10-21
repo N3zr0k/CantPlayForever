@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.8] — Latest 1
+- Internal cleanups; no change for players.
+
 ## [0.5.7] — Latest 1
 - Improved the quality of the holiday decorations around the clock.
 
