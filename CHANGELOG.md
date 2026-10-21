@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.9] — Latest 1
+- Fixed the "Disable all alarms" button in the options window not being clickable.
+
 ## [0.5.8] — Latest 1
 - Internal cleanups; no change for players.
 
