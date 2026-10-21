@@ -122,3 +122,4 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `docs/images/delete_bin.png` | Quelle des goldenen Papierkorbs (nicht im Addon-Paket) | – | – |
 | `docs/images/CantPlayForever_Header_light.png` | Header hell (GitHub, README) (nicht im Addon-Paket) | – | – |
 | `docs/images/CantPlayForever_Header_dark.png` | Header dunkel (CurseForge) (nicht im Addon-Paket) | – | – |
+| `docs/CantPlayForever_Fest-Overlays.zip` | Quell-Dateien der Fest-Overlays (PNG + TGA, 128×128) (nicht im Addon-Paket) | – | – |

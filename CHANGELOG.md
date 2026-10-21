@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.7] — Latest 1
+- Improved the quality of the holiday decorations around the clock.
+
+## [0.5.6] — Latest 1
+- Updated the Hallow's End decoration around the clock.
+
 ## [0.5.5] — Latest 1
 - Internal cleanups; no change for players.
 
