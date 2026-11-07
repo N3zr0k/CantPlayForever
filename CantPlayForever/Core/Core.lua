@@ -160,6 +160,10 @@ local DEFAULTS = {
         holidayDisplay = 'both', -- Anzeige eines Festes an der Uhr: 'overlay' | 'both' | 'icon'
         hideBlizzardClock = true, -- Blizzard-Uhr ausblenden, solange unsere Uhr sichtbar ist
         clockStyle = 'digital', -- 'digital' | 'analog' (für alle Größen)
+        clockLook = 'standard', -- große Uhr: 'standard' | 'ellesmere' | 'elvui' (Balkenform)
+        barWidth = 220, -- Balkenform: Breite, Höhe (UI-Pixel) und Deckkraft des Hintergrunds (%)
+        barHeight = 44,
+        barOpacity = 60,
         use24Hour = true,
         -- Größe in UI-Pixeln. Alte Profile mit smallClock=true starten bei 32px.
         -- clockSize bleibt ohne Default, damit alte smallClock-Profile migriert werden.

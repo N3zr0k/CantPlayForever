@@ -181,6 +181,7 @@ end
 function Clock:UpdateBadges()
     local button = self.iconButton
     if not button then return end
+    if self:IsBarClock() then return self:UpdateBarBadges() end
     local diameter = self:GetClockDiameter()
     local big = diameter > ns.SMALL_DIAMETER
     local profile = self.db.profile

@@ -152,6 +152,7 @@ end
 -- Klein ist immer analog; Mittel und Groß folgen dem Schalter Analog/Digital.
 function Clock:IsAnalogClock()
     if not self.db then return false end
+    if self:IsBarClock() then return false end -- Balkenform ist immer digital
     return self:GetClockDiameter() == SMALL_DIAMETER or self.db.profile.clockStyle == 'analog'
 end
 
@@ -189,6 +190,7 @@ function Clock:UpdateClock()
     if self.dataObject then self.dataObject.text = label end
     if self.UpdateAnalogClock then self:UpdateAnalogClock() end
     if not self.clockText then return end
+    if self.barActive then self:UpdateBarClock(); return end
 
     local diameter = self:GetClockDiameter()
     local k = diameter / 64
@@ -241,9 +243,9 @@ local MEDIUM_SNAP_ANGLE = 90 -- LibDBIcon: 90° = Norden
 function Clock:SaveFreePosition(centerX, centerY)
     local width, height = UIParent:GetWidth(), UIParent:GetHeight()
     if not width or not height or width <= 0 or height <= 0 then return end
-    local radius = LARGE_DIAMETER / 2
-    local x = Clamp(centerX, radius, math.max(radius, width - radius))
-    local y = Clamp(centerY, radius, math.max(radius, height - radius))
+    local radiusX, radiusY = self:LargeHalfExtent()
+    local x = Clamp(centerX, radiusX, math.max(radiusX, width - radiusX))
+    local y = Clamp(centerY, radiusY, math.max(radiusY, height - radiusY))
     self.db.profile.freeClock = {x = x / width, y = y / height}
 end
 
@@ -260,7 +262,11 @@ function Clock:UpdateClockPosition()
             button:SetPoint('BOTTOMRIGHT', UIParent, 'BOTTOMRIGHT', -SNAP_MARGIN, SNAP_MARGIN)
         elseif type(free) ~= 'table' then
             -- Frei verschiebbare große Uhr: Standard oben mittig, mit 16px Rand.
-            button:SetPoint('TOP', UIParent, 'TOP', 0, -(LARGE_DIAMETER / 2 + SNAP_MARGIN))
+            if self:IsBarClock() then
+                button:SetPoint('TOP', UIParent, 'TOP', 0, -SNAP_MARGIN)
+            else
+                button:SetPoint('TOP', UIParent, 'TOP', 0, -(LARGE_DIAMETER / 2 + SNAP_MARGIN))
+            end
         else
             local width, height = UIParent:GetWidth(), UIParent:GetHeight()
             if not width or not height or width <= 0 or height <= 0 then return end
@@ -287,13 +293,13 @@ function Clock:MoveClockToCursor()
         local x = px / scale - (self.dragOffsetX or 0)
         local y = py / scale - (self.dragOffsetY or 0)
         local width, height = UIParent:GetWidth(), UIParent:GetHeight()
-        local radius = LARGE_DIAMETER / 2
+        local radiusX, radiusY = self:LargeHalfExtent()
         local function Near(tx, ty)
             return (x - tx) ^ 2 + (y - ty) ^ 2 <= SNAP_DISTANCE ^ 2
         end
-        if width and height and Near(width / 2, height - radius - SNAP_MARGIN) then
+        if width and height and Near(width / 2, height - radiusY - SNAP_MARGIN) then
             self.db.profile.freeClock = nil
-        elseif width and height and Near(width - radius - SNAP_MARGIN, radius + SNAP_MARGIN) then
+        elseif width and height and Near(width - radiusX - SNAP_MARGIN, radiusY + SNAP_MARGIN) then
             self.db.profile.freeClock = {snap = 'bottomright', x = 1, y = 0}
         else
             self:SaveFreePosition(x, y)
@@ -393,6 +399,8 @@ function Clock:ApplyClockArt()
         self.clockSeconds:SetShadowOffset(1, -1)
     end
 
+    if not self:IsBarClock() then self:HideBarArt() end
+
     if diameter == SMALL_DIAMETER then
         -- Klein: Standard-Minimap-Symbol der Bibliothek (Rahmen, dunkle Scheibe, Standardgröße);
         -- die Analoguhr (AnalogClock.lua) sitzt auf der Scheibe.
@@ -406,6 +414,11 @@ function Clock:ApplyClockArt()
         if self.clockRing then self.clockRing:Hide() end
         self.clockFace:Hide()
         self.smallIcon:Hide()
+    elseif self:IsBarClock() then
+        if button.icon then button.icon:Hide() end
+        if button.border then button.border:Hide() end
+        if button.background then button.background:Hide() end
+        self:ApplyBarArt()
     else
         button:SetSize(diameter, diameter)
         if button.icon then button.icon:Hide() end

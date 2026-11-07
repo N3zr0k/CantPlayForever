@@ -51,6 +51,7 @@ Bibliotheken in `CantPlayForever/Libs` (Ace3, LibDBIcon, LibDataBroker, LibStub)
 | `Modules/Alarms/Options.lua` | Alarmliste, Edit-Modus, Zeitplan-Eingabe | alarms | alarmDisarmOrder |
 | `Modules/Clock/AnalogClock.lua` | Analoge Uhr | activeTimer, useLocalTime | – |
 | `Modules/Clock/Badges.lua` | Symbole am Uhrenrand (Timer, Alarm, Fest) | activeTimer, alarms, holidaySymbol | – |
+| `Modules/Clock/BarClock.lua` | Breite Balkenform der großen Uhr (ElvUI / EllesmereUI): Hintergrund, Zeit, Datum, Symbole | clockLook, barWidth, barHeight, barOpacity | – |
 | `Modules/Calendar/Holidays.lua` | Modul Calendar: Laufende Feste aus dem Spielkalender (Symbol, Tooltip, Fest-Dekoration um die Uhr, Options-Reiter Kalender mit Festliste) | holidaySymbol, holidayHidden, global.holidayCatalog | C_Calendar |
 | `Modules/Calendar/CalendarLink.lua` | Alarme als Termine in Classic Calendar - Revived, Kalendertermine (auch aus dem Spielkalender) per Knopf als Alarme | calLinkShow, calLinkLead | ClassicCalendar.API |
 | `Modules/Calendar/CalendarRange.lua` | Zeitraum der Alarme im Kalender: Einzelalarme immer, wiederholende nur die eingestellten Tage voraus | calLinkShowDays | - |

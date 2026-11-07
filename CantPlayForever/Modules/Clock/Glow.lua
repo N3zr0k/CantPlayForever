@@ -155,6 +155,7 @@ end
 -- Gemeinsam genutzt von der Uhr und der Testbühne; frame.layers enthält die Flächentextur.
 function Clock:LayoutGlowShape(frame, anchor, scale, style)
     local shape = style.shape or T.GLOW_SHAPE
+    if self:IsBarClock() then shape = 0 end -- Balken: nur die gefüllte Fläche, kein runder Ring
     for _, layer in ipairs(frame.layers) do layer:SetShown(shape ~= 1) end
     if shape == 0 then
         if frame.ringTex then frame.ringTex:Hide() end
@@ -227,10 +228,23 @@ function Clock:RefreshGlow()
     local frame = self.glowFrame
     frame:SetFrameLevel(button:GetFrameLevel() + 1)
     if frame.mask then
-        local scale = self:GetClockDiameter() / 64
-        frame.mask:SetSize(T.GLOW_DISC * scale, T.GLOW_DISC * scale)
-        frame.mask:ClearAllPoints()
-        frame.mask:SetPoint('CENTER', button, 'CENTER', T.GLOW_DX * scale, T.GLOW_DY * scale)
+        local layer = frame.layers[1]
+        if self:IsBarClock() then
+            -- Balken: ohne Kreismaske, das Leuchten füllt das ganze Rechteck.
+            if frame.maskApplied ~= false then
+                layer:RemoveMaskTexture(frame.mask)
+                frame.maskApplied = false
+            end
+        else
+            if frame.maskApplied == false then
+                layer:AddMaskTexture(frame.mask)
+                frame.maskApplied = nil
+            end
+            local scale = self:GetClockDiameter() / 64
+            frame.mask:SetSize(T.GLOW_DISC * scale, T.GLOW_DISC * scale)
+            frame.mask:ClearAllPoints()
+            frame.mask:SetPoint('CENTER', button, 'CENTER', T.GLOW_DX * scale, T.GLOW_DY * scale)
+        end
     end
     self:LayoutGlowShape(frame, button, self:GetClockDiameter() / 64, best.style)
     if self.glowEntry ~= best then
