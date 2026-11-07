@@ -116,4 +116,24 @@ assert(not Clock.holidayOverlay.shown and not Clock.badges.alarm.shown, 'keine D
 
 Clock:HideBarArt()
 assert(not Clock.barActive and not bar.bg.shown and not bar.icons.alarm.shown and button.highlight.alpha == 1, 'zurück zur runden Uhr')
+
+-- Automatische Wahl: erkanntes UI-Addon stellt Stil und Größe einmalig ein
+local loaded = {}
+IsAddOnLoaded = function(name) return loaded[name] end
+local sized
+Clock.SetClockSize = function(_, size) sized = size end
+Clock.Debug = function() end
+Clock.GetClockDiameter = function() return 64 end
+profile.clockLook = 'standard'
+Clock:AutoSelectLook()
+assert(profile.clockLook == 'standard' and sized == nil, 'ohne UI-Addon keine Änderung')
+loaded.EllesmereUI = true
+Clock:AutoSelectLook()
+assert(profile.clockLook == 'ellesmere' and sized == 95 and profile.autoLookFor == 'ellesmere', 'EllesmereUI erkannt')
+profile.clockLook = 'standard'; sized = nil
+Clock:AutoSelectLook()
+assert(profile.clockLook == 'standard' and sized == nil, 'eigene Wahl bleibt, nur einmal automatisch')
+loaded.ElvUI = true
+Clock:AutoSelectLook()
+assert(profile.clockLook == 'elvui' and sized == 95, 'ElvUI hat Vorrang und wird einmalig übernommen')
 print('BarClock OK')

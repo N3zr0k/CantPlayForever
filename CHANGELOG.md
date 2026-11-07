@@ -1,7 +1,8 @@
 # Changelog
 
-## [0.5.10] — Latest 1
+## [0.6.0] — Latest 1
 - New looks for the large clock: choose EllesmereUI or ElvUI for a wide, rectangular digital bar with time, date and the alarm, timer and holiday icons. Width, height and background opacity are adjustable, and the alarm and timer glow works here too.
+- If ElvUI or EllesmereUI is installed, the large clock switches once to the matching look automatically. You can change it afterwards in the options.
 
 ## [0.5.9] — Latest 1
 - Fixed the "Disable all alarms" button in the options window not being clickable.

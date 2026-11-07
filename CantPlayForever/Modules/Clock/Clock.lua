@@ -514,6 +514,7 @@ Clock:RegisterModule({
         self:ApplyClockArt()
     end,
     OnEnable = function(self)
+        self:AutoSelectLook()
         self:RefreshDisplay()
         self:ApplyBlizzardClock()
     end,

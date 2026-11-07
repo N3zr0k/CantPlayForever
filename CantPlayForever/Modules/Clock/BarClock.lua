@@ -58,6 +58,34 @@ function Clock:LargeHalfExtent()
     return LARGE_DIAMETER / 2, LARGE_DIAMETER / 2
 end
 
+-- Erkennt ElvUI / EllesmereUI und stellt einmalig die große Uhr im passenden Stil ein.
+-- Je erkanntem Addon nur einmal pro Profil (autoLookFor), danach gilt die eigene Wahl.
+local DETECT = {
+    {addon = 'ElvUI', look = 'elvui'},
+    {addon = 'EllesmereUI', look = 'ellesmere'},
+}
+
+local function AddonLoaded(name)
+    local api = _G.C_AddOns and _G.C_AddOns.IsAddOnLoaded or _G.IsAddOnLoaded
+    return api and api(name) and true or false
+end
+
+function Clock:AutoSelectLook()
+    local profile = self.db and self.db.profile
+    if not profile then return end
+    for _, entry in ipairs(DETECT) do
+        if AddonLoaded(entry.addon) then
+            if profile.autoLookFor ~= entry.look then
+                profile.autoLookFor = entry.look
+                profile.clockLook = entry.look
+                self:Debug('UI-Addon erkannt: %s, große Uhr im Stil %s', entry.addon, entry.look)
+                if self:GetClockDiameter() ~= LARGE_DIAMETER then self:SetClockSize(LARGE_DIAMETER) end
+            end
+            return
+        end
+    end
+end
+
 local function NewEdges(button)
     local edges = {}
     for index = 1, 4 do edges[index] = button:CreateTexture(nil, 'BORDER') end
